@@ -1,0 +1,99 @@
+import { useId, useState } from "react";
+import { ArrowDropDownFilled } from "./ArrowDropDownFilled";
+
+const templateOptions = [{ value: "", label: "Select Template" }];
+
+export const RegUserAddTag = (): JSX.Element => {
+  const selectId = useId();
+  const titleId = useId();
+  const [selectedTemplate, setSelectedTemplate] = useState("");
+
+  return (
+    <div
+      className="flex flex-col w-[600px] items-start relative"
+      data-palette-mode="dark"
+    >
+      <section
+        aria-labelledby={titleId}
+        className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto] bg-palette-background-paper-elevation-24 rounded-[var(--shape-borderradius)] overflow-hidden shadow-elevation-24"
+      >
+        <div className="flex-col items-start flex relative self-stretch w-full flex-[0_0_auto]">
+          <header className="flex-col items-start px-6 py-4 flex relative self-stretch w-full flex-[0_0_auto]">
+            <h2
+              id={titleId}
+              className="relative self-stretch mt-[-1.00px] font-typography-h6 font-[number:var(--typography-h6-font-weight)] text-palette-text-primary text-[length:var(--typography-h6-font-size)] tracking-[var(--typography-h6-letter-spacing)] leading-[var(--typography-h6-line-height)] [font-style:var(--typography-h6-font-style)]"
+            >
+              Add New Tag
+            </h2>
+          </header>
+          <div className="flex-col items-start pt-0 pb-5 px-6 flex relative self-stretch w-full flex-[0_0_auto]">
+            <div className="flex flex-col items-start gap-6 relative self-stretch w-full flex-[0_0_auto]">
+              <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
+                <label htmlFor={selectId} className="sr-only">
+                  Select Template
+                </label>
+                <div className="flex flex-col items-start px-3 py-0 relative self-stretch w-full flex-[0_0_auto] rounded-[var(--shape-borderradius)] border border-solid border-palette-components-input-outlined-enabledborder">
+                  <div className="flex items-center px-0 py-2 relative self-stretch w-full flex-[0_0_auto]">
+                    <div className="relative w-px h-6 pointer-events-none" />
+                    <div className="relative flex items-center flex-1">
+                      <select
+                        id={selectId}
+                        aria-label="Select Template"
+                        value={selectedTemplate}
+                        onChange={(event) =>
+                          setSelectedTemplate(event.target.value)
+                        }
+                        className="relative z-[1] w-full min-w-0 pr-8 mt-[-1.00px] font-input-value font-[number:var(--input-value-font-weight)] text-palette-text-secondary text-[length:var(--input-value-font-size)] tracking-[var(--input-value-letter-spacing)] leading-[var(--input-value-line-height)] [font-style:var(--input-value-font-style)]"
+                      >
+                        {templateOptions.map((option) => (
+                          <option
+                            key={option.label}
+                            value={option.value}
+                            className="bg-palette-background-paper-elevation-24 text-palette-text-primary"
+                          >
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="relative w-6 h-px pointer-events-none" />
+                    <ArrowDropDownFilled
+                      className="!absolute !top-[calc(50.00%_-_12px)] !right-0 !w-6 !h-6 pointer-events-none"
+                      aria-hidden="true"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <footer className="items-center justify-end gap-2 p-2 flex relative self-stretch w-full flex-[0_0_auto]">
+            <button
+              type="button"
+              className="inline-flex flex-col items-center justify-center px-2 py-1.5 relative flex-[0_0_auto] rounded-[var(--shape-borderradius)] overflow-hidden"
+            >
+              <div className="inline-flex items-center justify-center gap-2 relative flex-[0_0_auto]">
+                <div className="relative w-fit mt-[-1.00px] font-button-medium font-[number:var(--button-medium-font-weight)] text-palette-primary-main text-[length:var(--button-medium-font-size)] tracking-[var(--button-medium-letter-spacing)] leading-[var(--button-medium-line-height)] whitespace-nowrap [font-style:var(--button-medium-font-style)]">
+                  CANCEL
+                </div>
+              </div>
+            </button>
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              className="all-[unset] box-border inline-flex flex-col items-center justify-center px-2 py-1.5 flex-[0_0_auto] mb-[-1.00px] mr-[-1.00px] rounded-[var(--shape-borderradius)] overflow-hidden border-0 border-none relative mt-[-1.00px] border-palette-action-disabledbackground cursor-not-allowed"
+            >
+              <div className="inline-flex items-center justify-center gap-2 relative flex-[0_0_auto]">
+                <div className="w-fit font-button-medium font-[number:var(--button-medium-font-weight)] text-palette-action-disabled text-[length:var(--button-medium-font-size)] tracking-[var(--button-medium-letter-spacing)] leading-[var(--button-medium-line-height)] whitespace-nowrap relative mt-[-1.00px] [font-style:var(--button-medium-font-style)]">
+                  NEXT
+                </div>
+              </div>
+            </button>
+          </footer>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default RegUserAddTag;

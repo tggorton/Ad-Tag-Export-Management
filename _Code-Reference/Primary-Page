@@ -1,0 +1,231 @@
+import { AssetManagementSection } from "./AssetManagementSection";
+import { CampaignDetailsSection } from "./CampaignDetailsSection";
+import { ChevronRightFilled } from "./ChevronRightFilled";
+import image from "./image.svg";
+import kisspngBarChartComputerIconsFontAwesomeComputerSofStatistics5Ac014465704E32999613515225375423564 from "./kisspng-bar-chart-computer-icons-font-awesome-computer-sof-statistics-5ac014465704e3-2999613515225375423564.png";
+import logoItem from "./logo-item.svg";
+import { ShoppingCart } from "./ShoppingCart";
+import UIShellLeftPanelMenuItem from "./UI-shell-left-panel-menu-item.svg";
+import vector from "./vector.svg";
+import vector2 from "./vector-2.svg";
+import vector3 from "./vector-3.svg";
+import vector5 from "./vector-5.svg";
+import vector6 from "./vector-6.svg";
+import vector7 from "./vector-7.svg";
+import vector8 from "./vector-8.svg";
+import vector9 from "./vector-9.svg";
+import vectorStroke from "./vector-stroke.svg";
+
+const breadcrumbItems = [
+  "Advertisers",
+  "Redbull",
+  "RedBull_Stratos_Farewell_V2",
+  "RedBull_Vid_Stratos_Awareness_Q1_2019",
+];
+
+const sideNavItems = [
+  {
+    key: "dashboard",
+    type: "img" as const,
+    src: image,
+    alt: "Dashboard",
+    className: "relative w-4 h-4",
+  },
+  {
+    key: "media",
+    type: "img" as const,
+    src: vector2,
+    alt: "Media",
+    className: "relative w-4 h-[12.57px]",
+  },
+  {
+    key: "analytics",
+    type: "img" as const,
+    src: vector3,
+    alt: "Analytics",
+    className: "relative w-4 h-4",
+  },
+  {
+    key: "reports",
+    type: "img" as const,
+    src: kisspngBarChartComputerIconsFontAwesomeComputerSofStatistics5Ac014465704E32999613515225375423564,
+    alt: "Reports",
+    className: "relative w-4 h-4",
+  },
+  {
+    key: "campaigns-active",
+    type: "svg" as const,
+    src: UIShellLeftPanelMenuItem,
+    alt: "Campaigns",
+    fullWidth: true,
+  },
+  {
+    key: "audiences",
+    type: "custom" as const,
+  },
+  {
+    key: "commerce",
+    type: "component" as const,
+  },
+  {
+    key: "settings",
+    type: "img" as const,
+    src: vector5,
+    alt: "Settings",
+    className: "relative w-4 h-[16.9px]",
+  },
+  {
+    key: "notifications",
+    type: "img" as const,
+    src: vector6,
+    alt: "Notifications",
+    className: "relative w-4 h-[18.55px] mt-[-0.28px] mb-[-0.28px]",
+  },
+  {
+    key: "help",
+    type: "img" as const,
+    src: vector7,
+    alt: "Help",
+    className: "relative w-4 h-4",
+  },
+];
+
+export const TagDistroPage = (): JSX.Element => {
+  return (
+    <main
+      className="relative flex h-[1467px] w-[1440px] flex-col bg-palette-background-default"
+      data-palette-mode="light"
+    >
+      <aside
+        aria-label="Primary navigation"
+        className="fixed left-0 top-0 z-[3] inline-flex h-[1274px] items-start"
+      >
+        <div className="inline-flex self-stretch flex-[0_0_auto] flex-col items-start gap-12 bg-[#001529] px-0 py-4">
+          <a
+            href="#main-content"
+            className="absolute left-2 top-2 -translate-y-16 rounded bg-white px-3 py-2 text-black focus:translate-y-0"
+          >
+            Skip to content
+          </a>
+          <img
+            className="relative w-12 flex-[0_0_auto] bg-blend-multiply"
+            alt="Logo item"
+            src={logoItem}
+          />
+          <nav
+            aria-label="Sidebar menu"
+            className="inline-flex flex-[0_0_auto] flex-col items-start gap-4 bg-[#001529] px-0 py-4"
+          >
+            {sideNavItems.map((item) => {
+              if (item.type === "svg" && item.fullWidth) {
+                return (
+                  <img
+                    key={item.key}
+                    className="relative self-stretch w-full flex-[0_0_auto] bg-blend-multiply"
+                    alt={item.alt}
+                    src={item.src}
+                  />
+                );
+              }
+
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  aria-label={
+                    item.type === "custom"
+                      ? "Audiences"
+                      : item.type === "component"
+                        ? "Shopping cart"
+                        : item.alt
+                  }
+                  className="relative flex w-full flex-[0_0_auto] items-start bg-transparenttransparent bg-blend-multiply"
+                >
+                  <span className="relative inline-flex h-8 flex-[0_0_auto] items-center gap-6 px-4 py-[7px]">
+                    {item.type === "img" && (
+                      <img
+                        className={item.className}
+                        alt={item.alt}
+                        src={item.src}
+                      />
+                    )}
+                    {item.type === "custom" && (
+                      <span className="relative h-[12.8px] w-4 bg-[url(/vector-4.svg)] bg-[100%_100%]">
+                        <img
+                          className="absolute left-0 top-0 h-full w-full"
+                          alt="Vector stroke"
+                          src={vectorStroke}
+                        />
+                      </span>
+                    )}
+                    {item.type === "component" && (
+                      <ShoppingCart className="!relative !h-4 !w-4" />
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </aside>
+      <button
+        type="button"
+        aria-label="Collapse sidebar"
+        className="fixed left-[2.64%] top-0 z-[4] h-0 w-0 overflow-hidden rounded-[10px] bg-palette-common-black-main"
+      >
+        <img
+          className="absolute left-[calc(50.00%_-_3px)] top-[calc(50.00%_-_6px)] h-3 w-2"
+          alt="Collapse icon"
+          src={vector8}
+        />
+        <img
+          className="absolute left-0 top-0 h-full w-full"
+          alt="Collapse background"
+          src={vector9}
+        />
+      </button>
+      <header className="z-[1] mt-5 ml-[1368px] flex h-[22px] w-[22px]">
+        <button
+          type="button"
+          aria-label="Open notifications"
+          className="flex flex-1"
+        >
+          <img className="w-[16.5px] flex-1" alt="Notifications" src={vector} />
+        </button>
+      </header>
+      <section
+        id="main-content"
+        className="relative z-[2] mt-7 ml-[98px] inline-flex h-[1396px] w-[1292px] flex-col items-start gap-12"
+      >
+        <nav
+          aria-label="Breadcrumb"
+          className="inline-flex items-center relative flex-[0_0_auto]"
+        >
+          <ol className="inline-flex items-center">
+            {breadcrumbItems.map((item, index) => {
+              const isLast = index === breadcrumbItems.length - 1;
+
+              return (
+                <li key={item} className="inline-flex items-center">
+                  <span className="relative mt-[-1.00px] w-fit whitespace-nowrap font-typography-body1 text-[length:var(--typography-body1-font-size)] font-[number:var(--typography-body1-font-weight)] leading-[var(--typography-body1-line-height)] tracking-[var(--typography-body1-letter-spacing)] text-palette-text-primary [font-style:var(--typography-body1-font-style)]">
+                    {item}
+                  </span>
+                  {!isLast && (
+                    <span
+                      className="relative flex w-9 flex-col items-center"
+                      aria-hidden="true"
+                    >
+                      <ChevronRightFilled className="!relative !h-5 !w-5" />
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+        <CampaignDetailsSection />
+        <AssetManagementSection />
+      </section>
+    </main>
+  );
+};

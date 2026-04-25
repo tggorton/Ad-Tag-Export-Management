@@ -1,0 +1,153 @@
+import { useId, useState } from "react";
+import { ArrowDropDownFilled } from "./ArrowDropDownFilled";
+import { Hidden } from "./Hidden";
+import { IconComponentNode } from "./IconComponentNode";
+
+const tagTemplates = ["NEXXEN-1"];
+
+const tagTypeOptions = [
+  {
+    value: "choose-template",
+    label: "Choose Template",
+    Icon: Hidden,
+  },
+  {
+    value: "create-new-template",
+    label: "Create New Template",
+    Icon: IconComponentNode,
+  },
+];
+
+export const AdminUserAddNew = (): JSX.Element => {
+  const [selectedTagType, setSelectedTagType] = useState("choose-template");
+  const [selectedTemplate, setSelectedTemplate] = useState(tagTemplates[0]);
+  const tagTypeLegendId = useId();
+  const tagTemplateLabelId = useId();
+
+  return (
+    <div
+      className="flex flex-col w-[600px] items-start relative"
+      data-palette-mode="dark"
+    >
+      <section className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto] bg-palette-background-paper-elevation-24 rounded-[var(--shape-borderradius)] overflow-hidden shadow-elevation-24">
+        <div className="flex-col items-start flex relative self-stretch w-full flex-[0_0_auto]">
+          <header className="flex-col items-start px-6 py-4 flex relative self-stretch w-full flex-[0_0_auto]">
+            <h1 className="relative self-stretch mt-[-1.00px] font-typography-h6 font-[number:var(--typography-h6-font-weight)] text-palette-text-primary text-[length:var(--typography-h6-font-size)] tracking-[var(--typography-h6-letter-spacing)] leading-[var(--typography-h6-line-height)] [font-style:var(--typography-h6-font-style)]">
+              Add New Tag
+            </h1>
+          </header>
+          <div className="flex-col items-start pt-0 pb-5 px-6 flex relative self-stretch w-full flex-[0_0_auto]">
+            <div className="flex flex-col items-start gap-6 relative self-stretch w-full flex-[0_0_auto]">
+              <fieldset
+                className="flex flex-col h-[66px] items-start relative self-stretch w-full min-w-0"
+                aria-labelledby={tagTypeLegendId}
+              >
+                <legend
+                  id={tagTypeLegendId}
+                  className="inline-flex flex-col items-start relative flex-[0_0_auto] p-0"
+                >
+                  <span className="relative w-fit mt-[-1.00px] font-typography-body1 font-[number:var(--typography-body1-font-weight)] text-palette-text-primary text-[length:var(--typography-body1-font-size)] tracking-[var(--typography-body1-letter-spacing)] leading-[var(--typography-body1-line-height)] whitespace-nowrap [font-style:var(--typography-body1-font-style)]">
+                    Tag Type
+                  </span>
+                </legend>
+                <div className="items-center gap-3 inline-flex relative flex-[0_0_auto]">
+                  {tagTypeOptions.map(({ value, label, Icon }) => {
+                    const checked = selectedTagType === value;
+
+                    return (
+                      <label
+                        key={value}
+                        className="inline-flex items-center relative flex-[0_0_auto] cursor-pointer"
+                      >
+                        <input
+                          type="radio"
+                          name="tagType"
+                          value={value}
+                          checked={checked}
+                          onChange={() => setSelectedTagType(value)}
+                          className="sr-only"
+                        />
+                        <div className="inline-flex items-center relative flex-[0_0_auto]">
+                          <div className="inline-flex items-center gap-2.5 p-[9px] relative flex-[0_0_auto] rounded-[100px]">
+                            <Icon className="!relative !w-6 !h-6" />
+                          </div>
+                        </div>
+                        <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
+                          <div className="relative w-fit mt-[-1.00px] font-typography-body1 font-[number:var(--typography-body1-font-weight)] text-palette-text-primary text-[length:var(--typography-body1-font-size)] tracking-[var(--typography-body1-letter-spacing)] leading-[var(--typography-body1-line-height)] whitespace-nowrap [font-style:var(--typography-body1-font-style)]">
+                            {label}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+              <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
+                <label
+                  htmlFor="tag-template"
+                  id={tagTemplateLabelId}
+                  className="flex flex-col items-start px-3 py-0 relative self-stretch w-full flex-[0_0_auto] rounded-[var(--shape-borderradius)] border border-solid border-palette-components-input-outlined-enabledborder"
+                >
+                  <div className="flex items-center px-0 py-2 relative self-stretch w-full flex-[0_0_auto]">
+                    <div className="relative w-px h-6" />
+                    <select
+                      id="tag-template"
+                      aria-labelledby={tagTemplateLabelId}
+                      value={selectedTemplate}
+                      onChange={(event) =>
+                        setSelectedTemplate(event.target.value)
+                      }
+                      disabled={selectedTagType !== "choose-template"}
+                      className="relative flex items-center flex-1 mt-[-1.00px] font-input-value font-[number:var(--input-value-font-weight)] text-palette-text-primary text-[length:var(--input-value-font-size)] tracking-[var(--input-value-letter-spacing)] leading-[var(--input-value-line-height)] [font-style:var(--input-value-font-style)] disabled:text-palette-text-primary disabled:opacity-100"
+                    >
+                      {tagTemplates.map((template) => (
+                        <option
+                          key={template}
+                          value={template}
+                          className="bg-palette-background-paper-elevation-24 text-palette-text-primary"
+                        >
+                          {template}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="relative w-6 h-px" />
+                    <ArrowDropDownFilled className="!absolute !top-[calc(50.00%_-_12px)] !right-0 !w-6 !h-6 pointer-events-none" />
+                  </div>
+                  <div className="inline-flex h-0.5 items-center gap-2.5 px-1 py-0 absolute top-0 left-3 bg-[#383838]">
+                    <div className="relative flex items-center w-fit mt-[-6.00px] mb-[-4.00px] font-input-label font-[number:var(--input-label-font-weight)] text-palette-text-secondary text-[length:var(--input-label-font-size)] tracking-[var(--input-label-letter-spacing)] leading-[var(--input-label-line-height)] whitespace-nowrap [font-style:var(--input-label-font-style)]">
+                      Tag Template
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+          <footer className="items-center justify-end gap-2 p-2 flex relative self-stretch w-full flex-[0_0_auto]">
+            <button
+              type="button"
+              className="inline-flex flex-col items-center justify-center px-2 py-1.5 relative flex-[0_0_auto] rounded-[var(--shape-borderradius)] overflow-hidden"
+            >
+              <div className="inline-flex items-center justify-center gap-2 relative flex-[0_0_auto]">
+                <div className="relative w-fit mt-[-1.00px] font-button-medium font-[number:var(--button-medium-font-weight)] text-palette-primary-main text-[length:var(--button-medium-font-size)] tracking-[var(--button-medium-letter-spacing)] leading-[var(--button-medium-line-height)] whitespace-nowrap [font-style:var(--button-medium-font-style)]">
+                  CANCEL
+                </div>
+              </div>
+            </button>
+            <button
+              type="button"
+              disabled
+              className="all-[unset] box-border inline-flex flex-col items-center justify-center px-2 py-1.5 flex-[0_0_auto] mb-[-1.00px] mr-[-1.00px] rounded-[var(--shape-borderradius)] overflow-hidden border-0 border-none relative mt-[-1.00px] border-palette-action-disabledbackground cursor-not-allowed"
+              aria-disabled="true"
+            >
+              <div className="inline-flex items-center justify-center gap-2 relative flex-[0_0_auto]">
+                <div className="w-fit font-button-medium font-[number:var(--button-medium-font-weight)] text-palette-action-disabled text-[length:var(--button-medium-font-size)] tracking-[var(--button-medium-letter-spacing)] leading-[var(--button-medium-line-height)] whitespace-nowrap relative mt-[-1.00px] [font-style:var(--button-medium-font-style)]">
+                  NEXT
+                </div>
+              </div>
+            </button>
+          </footer>
+        </div>
+      </section>
+    </div>
+  );
+};
