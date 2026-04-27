@@ -8,11 +8,7 @@ import {
 
 type Buildable = Pick<
   Distro | Template,
-  | "family"
-  | "selectedParams"
-  | "selectedCreativeParams"
-  | "customKeyValues"
-  | "customMacros"
+  "family" | "selectedParams" | "selectedCreativeParams" | "customKeyValues"
 >;
 
 export const buildTagString = (entity: Buildable): string => {
@@ -35,11 +31,6 @@ export const buildTagString = (entity: Buildable): string => {
   for (const kv of entity.customKeyValues) {
     if (!kv.key.trim()) continue;
     parts.push(`&${encodeURIComponent(kv.key)}=${encodeURIComponent(kv.value)}`);
-  }
-
-  for (const m of entity.customMacros) {
-    if (!m.macro.trim()) continue;
-    parts.push(`&${encodeURIComponent(m.macro)}=${encodeURIComponent(m.token)}`);
   }
 
   return parts.join("");

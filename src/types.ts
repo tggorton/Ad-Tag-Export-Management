@@ -10,12 +10,6 @@ export interface CustomKeyValue {
   value: string;
 }
 
-export interface CustomMacro {
-  id: string;
-  macro: string;
-  token: string;
-}
-
 export interface Template {
   id: string;
   name: string;
@@ -24,7 +18,6 @@ export interface Template {
   selectedParams: string[];
   selectedCreativeParams: string[];
   customKeyValues: CustomKeyValue[];
-  customMacros: CustomMacro[];
   isBuiltIn?: boolean;
 }
 
@@ -37,7 +30,6 @@ export interface Distro {
   selectedParams: string[];
   selectedCreativeParams: string[];
   customKeyValues: CustomKeyValue[];
-  customMacros: CustomMacro[];
   distributionId: number;
   lineItemId: number;
   createdAt: string;

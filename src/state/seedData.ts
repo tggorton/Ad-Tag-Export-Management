@@ -17,7 +17,6 @@ export const seedTemplates: Template[] = [
     ],
     selectedCreativeParams: ["cta"],
     customKeyValues: [],
-    customMacros: [],
     isBuiltIn: true,
   },
   {
@@ -35,7 +34,6 @@ export const seedTemplates: Template[] = [
     ],
     selectedCreativeParams: ["autopop_first", "rand_titles"],
     customKeyValues: [],
-    customMacros: [],
     isBuiltIn: true,
   },
   {
@@ -53,7 +51,6 @@ export const seedTemplates: Template[] = [
     ],
     selectedCreativeParams: ["cta", "player_font"],
     customKeyValues: [],
-    customMacros: [],
     isBuiltIn: true,
   },
   {
@@ -70,7 +67,6 @@ export const seedTemplates: Template[] = [
     ],
     selectedCreativeParams: ["cta"],
     customKeyValues: [],
-    customMacros: [],
     isBuiltIn: true,
   },
   {
@@ -87,7 +83,6 @@ export const seedTemplates: Template[] = [
     ],
     selectedCreativeParams: ["autopop_first", "rand_titles"],
     customKeyValues: [],
-    customMacros: [],
     isBuiltIn: true,
   },
   {
@@ -104,7 +99,6 @@ export const seedTemplates: Template[] = [
     ],
     selectedCreativeParams: ["cta", "player_font"],
     customKeyValues: [],
-    customMacros: [],
     isBuiltIn: true,
   },
 ];

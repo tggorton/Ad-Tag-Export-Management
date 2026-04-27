@@ -4,13 +4,12 @@ import { useApp } from "../state/AppContext";
 import type { Distro } from "../types";
 import { buildDistroUrl } from "../lib/tagBuilder";
 import { downloadCsv } from "../lib/csvExport";
-import { AddDistroDialog } from "./AddDistroDialog";
 import { DistroTable } from "./DistroTable";
-import { TagEditorDialog, type EditorState } from "./TagEditorDialog";
+import { TagEditorDialog } from "./TagEditorDialog";
 import { SectionHeader } from "./SectionHeader";
 
 export const DistrosSection = () => {
-  const { state, removeDistro, updateDistro } = useApp();
+  const { state, removeDistro } = useApp();
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Distro | null>(null);
   const [snack, setSnack] = useState<string | null>(null);
@@ -36,34 +35,6 @@ export const DistrosSection = () => {
     }
     downloadCsv(state.distros);
     setSnack(`Exported ${state.distros.length} distribution(s) to CSV`);
-  };
-
-  const editorInitial: EditorState | null = editing
-    ? {
-        name: editing.name,
-        family: editing.family,
-        region: editing.region,
-        selectedParams: [...editing.selectedParams],
-        selectedCreativeParams: [...editing.selectedCreativeParams],
-        customKeyValues: editing.customKeyValues.map((kv) => ({ ...kv })),
-        customMacros: editing.customMacros.map((m) => ({ ...m })),
-      }
-    : null;
-
-  const handleEditSubmit = (next: EditorState) => {
-    if (!editing) return;
-    updateDistro({
-      ...editing,
-      name: next.name.trim(),
-      family: next.family,
-      region: next.region,
-      selectedParams: next.selectedParams,
-      selectedCreativeParams: next.selectedCreativeParams,
-      customKeyValues: next.customKeyValues,
-      customMacros: next.customMacros,
-    });
-    setEditing(null);
-    setSnack(`Updated "${next.name}"`);
   };
 
   return (
@@ -98,18 +69,17 @@ export const DistrosSection = () => {
         onEdit={(d) => setEditing(d)}
         onDelete={handleDelete}
       />
-      <AddDistroDialog open={addOpen} onClose={() => setAddOpen(false)} />
-      {editorInitial && (
-        <TagEditorDialog
-          open={Boolean(editing)}
-          mode="distro"
-          title="Edit Distribution"
-          initialState={editorInitial}
-          submitLabel="Save"
-          onClose={() => setEditing(null)}
-          onSubmit={handleEditSubmit}
-        />
-      )}
+      <TagEditorDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSaved={(message) => setSnack(message)}
+      />
+      <TagEditorDialog
+        open={Boolean(editing)}
+        editingDistro={editing}
+        onClose={() => setEditing(null)}
+        onSaved={(message) => setSnack(message)}
+      />
       <Snackbar
         open={Boolean(snack)}
         autoHideDuration={2000}

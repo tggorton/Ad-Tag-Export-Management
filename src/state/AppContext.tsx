@@ -6,7 +6,7 @@ import {
   useReducer,
   type ReactNode,
 } from "react";
-import type { AppState, Distro, Role, Template } from "../types";
+import type { AppState, CustomKeyValue, Distro, Role, Template } from "../types";
 import { seedTemplates } from "./seedData";
 
 const STORAGE_KEY = "radius.adtags.v1";
@@ -24,7 +24,8 @@ type Action =
   | { type: "addDistro"; distro: Distro }
   | { type: "updateDistro"; distro: Distro }
   | { type: "removeDistro"; id: string }
-  | { type: "addTemplate"; template: Template };
+  | { type: "addTemplate"; template: Template }
+  | { type: "updateTemplate"; template: Template };
 
 const reducer = (state: AppState, action: Action): AppState => {
   switch (action.type) {
@@ -55,6 +56,13 @@ const reducer = (state: AppState, action: Action): AppState => {
       };
     case "addTemplate":
       return { ...state, templates: [...state.templates, action.template] };
+    case "updateTemplate":
+      return {
+        ...state,
+        templates: state.templates.map((t) =>
+          t.id === action.template.id ? action.template : t,
+        ),
+      };
     default:
       return state;
   }
@@ -67,10 +75,34 @@ interface AppContextValue {
   updateDistro: (distro: Distro) => void;
   removeDistro: (id: string) => void;
   addTemplate: (template: Template) => void;
+  updateTemplate: (template: Template) => void;
   nextDistributionId: () => number;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
+
+/**
+ * Migrate legacy entities that had `customMacros` (now consolidated into
+ * `customKeyValues`). The macro `{ macro, token }` shape is mapped to
+ * `{ key: macro, value: token }` and merged into `customKeyValues`.
+ */
+const migrateCustomFields = <T extends { customKeyValues: CustomKeyValue[] }>(
+  entity: T,
+): T => {
+  const legacyMacros = (
+    entity as unknown as {
+      customMacros?: Array<{ id: string; macro: string; token: string }>;
+    }
+  ).customMacros;
+  if (!legacyMacros || legacyMacros.length === 0) return entity;
+  return {
+    ...entity,
+    customKeyValues: [
+      ...entity.customKeyValues,
+      ...legacyMacros.map((m) => ({ id: m.id, key: m.macro, value: m.token })),
+    ],
+  };
+};
 
 const loadFromStorage = (): AppState | null => {
   try {
@@ -81,7 +113,8 @@ const loadFromStorage = (): AppState | null => {
     return {
       ...initialState,
       ...parsed,
-      templates: mergeBuiltInTemplates(parsed.templates),
+      templates: mergeBuiltInTemplates(parsed.templates).map(migrateCustomFields),
+      distros: parsed.distros.map(migrateCustomFields),
     };
   } catch {
     return null;
@@ -112,6 +145,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       updateDistro: (distro) => dispatch({ type: "updateDistro", distro }),
       removeDistro: (id) => dispatch({ type: "removeDistro", id }),
       addTemplate: (template) => dispatch({ type: "addTemplate", template }),
+      updateTemplate: (template) =>
+        dispatch({ type: "updateTemplate", template }),
       nextDistributionId: () => state.nextDistributionId,
     }),
     [state],
