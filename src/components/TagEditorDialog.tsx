@@ -278,9 +278,14 @@ export const TagEditorDialog = ({
       customKeyValues: form.customKeyValues,
     };
     addTemplate(newTemplate);
+    // Auto-select the newly-saved template in the dropdown so the admin can
+    // immediately add a distro from it (or keep iterating) without reopening
+    // the editor and re-picking it.
+    setTemplateId(newTemplate.id);
     onSaved?.(`Saved template "${newTemplate.name}"`);
     setUpdateChoiceOpen(false);
-    onClose();
+    // Editor stays open intentionally — admin can immediately use the
+    // template (e.g. click Add to create a distro from it).
   };
 
   const persistAsUpdatedTemplate = () => {
@@ -296,7 +301,8 @@ export const TagEditorDialog = ({
     });
     onSaved?.(`Updated template "${originalTemplate.name}"`);
     setUpdateChoiceOpen(false);
-    onClose();
+    // Editor stays open intentionally — admin can immediately add a distro
+    // using the just-updated template.
   };
 
   const handleTemplateButtonClick = () => {
