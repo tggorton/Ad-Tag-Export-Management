@@ -35,6 +35,7 @@ import { useApp } from "../state/AppContext";
 import { TagPreview } from "./TagPreview";
 import { ParamCheckboxGroup } from "./ParamCheckboxGroup";
 import { CustomFieldsSection } from "./CustomFieldsSection";
+import { DeleteTemplatesDialog } from "./DeleteTemplatesDialog";
 
 interface FormState {
   name: string;
@@ -109,6 +110,9 @@ export const TagEditorDialog = ({
   const [nameError, setNameError] = useState(false);
   const [updateChoiceOpen, setUpdateChoiceOpen] = useState(false);
   const [saveChoice, setSaveChoice] = useState<"new" | "existing">("new");
+  const [templateNameDraft, setTemplateNameDraft] = useState("");
+  const [templateNameError, setTemplateNameError] = useState(false);
+  const [deleteTemplatesOpen, setDeleteTemplatesOpen] = useState(false);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
 
   // Reset every time the dialog opens.
@@ -123,12 +127,22 @@ export const TagEditorDialog = ({
     setNameError(false);
     setUpdateChoiceOpen(false);
     setSaveChoice("new");
+    setTemplateNameDraft("");
+    setTemplateNameError(false);
+    setDeleteTemplatesOpen(false);
   }, [open, editingDistro]);
 
-  // Reset the radio choice each time the sub-dialog opens.
-  useEffect(() => {
-    if (updateChoiceOpen) setSaveChoice("new");
-  }, [updateChoiceOpen]);
+  const handleTemplatesDeleted = (deletedIds: string[]) => {
+    // If the picked template was just deleted, clear the selection so the
+    // dropdown reverts to "Select Template (optional)". The form fields stay
+    // populated with whatever the admin had configured.
+    if (templateId && deletedIds.includes(templateId)) {
+      setTemplateId("");
+    }
+    onSaved?.(
+      `Deleted ${deletedIds.length} template${deletedIds.length === 1 ? "" : "s"}`,
+    );
+  };
 
   const tagString = useMemo(() => buildTagString(form), [form]);
 
@@ -177,6 +191,32 @@ export const TagEditorDialog = ({
   const handleNameChange = (value: string) => {
     update("name", value);
     if (nameError && value.trim().length > 0) setNameError(false);
+  };
+
+  const requireTemplateName = (): boolean => {
+    if (templateNameDraft.trim().length > 0) return true;
+    setTemplateNameError(true);
+    return false;
+  };
+
+  const handleTemplateNameChange = (value: string) => {
+    setTemplateNameDraft(value);
+    if (templateNameError && value.trim().length > 0) {
+      setTemplateNameError(false);
+    }
+  };
+
+  // Switching the radio fills sensible defaults: "Save New" wants a fresh
+  // name from the user, "Update Existing" defaults to the picked template's
+  // current name (admin can still edit it to rename in place).
+  const handleSaveChoiceChange = (next: "new" | "existing") => {
+    setSaveChoice(next);
+    setTemplateNameError(false);
+    if (next === "new") {
+      setTemplateNameDraft("");
+    } else {
+      setTemplateNameDraft(originalTemplate?.name ?? "");
+    }
   };
 
   const showTemplateSelector = !isEditMode;
@@ -268,9 +308,10 @@ export const TagEditorDialog = ({
   };
 
   const persistAsNewTemplate = () => {
+    const finalName = templateNameDraft.trim();
     const newTemplate: Template = {
       id: `tpl-${newId().slice(0, 8)}`,
-      name: form.name.trim(),
+      name: finalName,
       family: form.family,
       region: form.region,
       selectedParams: form.selectedParams,
@@ -282,44 +323,44 @@ export const TagEditorDialog = ({
     // immediately add a distro from it (or keep iterating) without reopening
     // the editor and re-picking it.
     setTemplateId(newTemplate.id);
-    onSaved?.(`Saved template "${newTemplate.name}"`);
+    onSaved?.(`Saved template "${finalName}"`);
     setUpdateChoiceOpen(false);
-    // Editor stays open intentionally — admin can immediately use the
-    // template (e.g. click Add to create a distro from it).
+    // Editor stays open intentionally.
   };
 
   const persistAsUpdatedTemplate = () => {
     if (!originalTemplate) return;
+    const finalName = templateNameDraft.trim();
     updateTemplate({
       ...originalTemplate,
-      // Preserve existing name and id; just refresh the configuration.
+      // Allow renaming the template via this flow.
+      name: finalName,
       family: form.family,
       region: form.region,
       selectedParams: form.selectedParams,
       selectedCreativeParams: form.selectedCreativeParams,
       customKeyValues: form.customKeyValues,
     });
-    onSaved?.(`Updated template "${originalTemplate.name}"`);
+    onSaved?.(`Updated template "${finalName}"`);
     setUpdateChoiceOpen(false);
-    // Editor stays open intentionally — admin can immediately add a distro
-    // using the just-updated template.
+    // Editor stays open intentionally.
   };
 
+  // Open the save-template modal. Distro Name (form.name) is intentionally NOT
+  // required here — it belongs to the distro, not the template.
   const handleTemplateButtonClick = () => {
-    if (!requireName()) return;
-    if (isTemplatePicked) {
-      // Open the choice sub-dialog: Save New vs. Update Existing.
-      setUpdateChoiceOpen(true);
-    } else {
-      persistAsNewTemplate();
-    }
+    setSaveChoice("new");
+    setTemplateNameDraft("");
+    setTemplateNameError(false);
+    setUpdateChoiceOpen(true);
   };
 
   const handleSaveDialogConfirm = () => {
-    if (saveChoice === "new") {
-      persistAsNewTemplate();
-    } else {
+    if (!requireTemplateName()) return;
+    if (isTemplatePicked && saveChoice === "existing") {
       persistAsUpdatedTemplate();
+    } else {
+      persistAsNewTemplate();
     }
   };
 
@@ -371,35 +412,56 @@ export const TagEditorDialog = ({
           />
 
           {showTemplateSelector && (
-            <TextField
-              select
-              label="Tag Template"
-              value={templateId}
-              onChange={(e) => handleTemplateChange(e.target.value)}
-              size="medium"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (selected) => {
-                  if (!selected) {
-                    return (
-                      <span style={{ color: "rgba(255,255,255,0.5)" }}>
-                        Select Template (optional)
-                      </span>
+            <Stack spacing={0.5}>
+              <TextField
+                select
+                label="Tag Template"
+                value={templateId}
+                onChange={(e) => handleTemplateChange(e.target.value)}
+                size="medium"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (selected) => {
+                    if (!selected) {
+                      return (
+                        <span style={{ color: "rgba(255,255,255,0.5)" }}>
+                          Select Template (optional)
+                        </span>
+                      );
+                    }
+                    const tpl = state.templates.find(
+                      (t) => t.id === selected,
                     );
-                  }
-                  const tpl = state.templates.find((t) => t.id === selected);
-                  return tpl?.name ?? "";
-                },
-              }}
-            >
-              {state.templates.map((t) => (
-                <MenuItem key={t.id} value={t.id}>
-                  {t.name}
-                </MenuItem>
-              ))}
-            </TextField>
+                    return tpl?.name ?? "";
+                  },
+                }}
+              >
+                {state.templates.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>
+                    {t.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+              {isAdmin && (
+                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                  <Button
+                    size="small"
+                    onClick={() => setDeleteTemplatesOpen(true)}
+                    sx={{
+                      color: "text.secondary",
+                      textTransform: "none",
+                      fontSize: 12,
+                      minWidth: 0,
+                      px: 0.5,
+                    }}
+                  >
+                    Delete Templates
+                  </Button>
+                </Box>
+              )}
+            </Stack>
           )}
 
           <FormControl>
@@ -511,34 +573,53 @@ export const TagEditorDialog = ({
         </DialogTitle>
         <DialogContent sx={{ px: 3, pb: 1 }}>
           <Stack spacing={3} sx={{ mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              You've modified <strong>{originalTemplate?.name}</strong>.
-            </Typography>
-            <FormControl>
-              <FormLabel
-                sx={{ fontSize: 13, mb: 0.5, color: "text.primary" }}
-              >
-                Save Type
-              </FormLabel>
-              <RadioGroup
-                row
-                value={saveChoice}
-                onChange={(e) =>
-                  setSaveChoice(e.target.value as "new" | "existing")
-                }
-              >
-                <FormControlLabel
-                  value="new"
-                  control={<Radio size="small" />}
-                  label="Save New Template"
-                />
-                <FormControlLabel
-                  value="existing"
-                  control={<Radio size="small" />}
-                  label="Update Existing Template"
-                />
-              </RadioGroup>
-            </FormControl>
+            {isTemplatePicked && originalTemplate && (
+              <>
+                <Typography variant="body2" color="text.secondary">
+                  You've modified <strong>{originalTemplate.name}</strong>.
+                </Typography>
+                <FormControl>
+                  <FormLabel
+                    sx={{ fontSize: 13, mb: 0.5, color: "text.primary" }}
+                  >
+                    Save Type
+                  </FormLabel>
+                  <RadioGroup
+                    row
+                    value={saveChoice}
+                    onChange={(e) =>
+                      handleSaveChoiceChange(e.target.value as "new" | "existing")
+                    }
+                  >
+                    <FormControlLabel
+                      value="new"
+                      control={<Radio size="small" />}
+                      label="Save New Template"
+                    />
+                    <FormControlLabel
+                      value="existing"
+                      control={<Radio size="small" />}
+                      label="Update Existing Template"
+                    />
+                  </RadioGroup>
+                </FormControl>
+              </>
+            )}
+            <TextField
+              label="Template Name"
+              value={templateNameDraft}
+              onChange={(e) => handleTemplateNameChange(e.target.value)}
+              size="medium"
+              required
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              error={templateNameError}
+              helperText={
+                templateNameError ? "Template Name is required" : undefined
+              }
+              autoFocus
+            />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 2, py: 1.5 }}>
@@ -556,6 +637,11 @@ export const TagEditorDialog = ({
           </Button>
         </DialogActions>
       </Dialog>
+      <DeleteTemplatesDialog
+        open={deleteTemplatesOpen}
+        onClose={() => setDeleteTemplatesOpen(false)}
+        onDeleted={handleTemplatesDeleted}
+      />
     </Dialog>
   );
 };

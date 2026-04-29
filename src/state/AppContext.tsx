@@ -25,7 +25,8 @@ type Action =
   | { type: "updateDistro"; distro: Distro }
   | { type: "removeDistro"; id: string }
   | { type: "addTemplate"; template: Template }
-  | { type: "updateTemplate"; template: Template };
+  | { type: "updateTemplate"; template: Template }
+  | { type: "deleteTemplates"; ids: string[] };
 
 const reducer = (state: AppState, action: Action): AppState => {
   switch (action.type) {
@@ -63,6 +64,13 @@ const reducer = (state: AppState, action: Action): AppState => {
           t.id === action.template.id ? action.template : t,
         ),
       };
+    case "deleteTemplates": {
+      const idSet = new Set(action.ids);
+      return {
+        ...state,
+        templates: state.templates.filter((t) => !idSet.has(t.id)),
+      };
+    }
     default:
       return state;
   }
@@ -76,6 +84,7 @@ interface AppContextValue {
   removeDistro: (id: string) => void;
   addTemplate: (template: Template) => void;
   updateTemplate: (template: Template) => void;
+  deleteTemplates: (ids: string[]) => void;
   nextDistributionId: () => number;
 }
 
@@ -110,21 +119,18 @@ const loadFromStorage = (): AppState | null => {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as AppState;
     if (!parsed.templates || !parsed.distros) return null;
+    // We intentionally do NOT re-merge missing built-in templates here so that
+    // admin deletions persist across reloads. New users (no localStorage yet)
+    // still get the full seed set via `initialState`.
     return {
       ...initialState,
       ...parsed,
-      templates: mergeBuiltInTemplates(parsed.templates).map(migrateCustomFields),
+      templates: parsed.templates.map(migrateCustomFields),
       distros: parsed.distros.map(migrateCustomFields),
     };
   } catch {
     return null;
   }
-};
-
-const mergeBuiltInTemplates = (stored: Template[]): Template[] => {
-  const storedIds = new Set(stored.map((t) => t.id));
-  const missingBuiltIns = seedTemplates.filter((t) => !storedIds.has(t.id));
-  return [...missingBuiltIns, ...stored];
 };
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
@@ -147,6 +153,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       addTemplate: (template) => dispatch({ type: "addTemplate", template }),
       updateTemplate: (template) =>
         dispatch({ type: "updateTemplate", template }),
+      deleteTemplates: (ids) => dispatch({ type: "deleteTemplates", ids }),
       nextDistributionId: () => state.nextDistributionId,
     }),
     [state],
