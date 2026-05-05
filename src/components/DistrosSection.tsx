@@ -6,16 +6,21 @@ import { buildDistroUrl } from "../lib/tagBuilder";
 import { downloadCsv } from "../lib/csvExport";
 import { DistroTable } from "./DistroTable";
 import { TagEditorDialog } from "./TagEditorDialog";
+import { ManageTemplatesDialog } from "./ManageTemplatesDialog";
 import { SectionHeader } from "./SectionHeader";
 
 export const DistrosSection = () => {
   const { state, removeDistro } = useApp();
+  const isAdmin = state.role === "admin";
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Distro | null>(null);
+  const [manageOpen, setManageOpen] = useState(false);
   const [snack, setSnack] = useState<string | null>(null);
 
   const handleCopy = async (distro: Distro) => {
-    await navigator.clipboard.writeText(buildDistroUrl(distro));
+    await navigator.clipboard.writeText(
+      buildDistroUrl(distro, state.paramsCatalog),
+    );
     setSnack(`Copied tag URL for "${distro.name}"`);
   };
 
@@ -33,7 +38,7 @@ export const DistrosSection = () => {
       setSnack("No distributions to export");
       return;
     }
-    downloadCsv(state.distros);
+    downloadCsv(state.distros, state.paramsCatalog);
     setSnack(`Exported ${state.distros.length} distribution(s) to CSV`);
   };
 
@@ -51,6 +56,16 @@ export const DistrosSection = () => {
             >
               + Add Distribution Tag
             </Button>
+            {isAdmin && (
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                onClick={() => setManageOpen(true)}
+              >
+                Manage Templates
+              </Button>
+            )}
             <Button
               variant="outlined"
               color="primary"
@@ -78,6 +93,11 @@ export const DistrosSection = () => {
         open={Boolean(editing)}
         editingDistro={editing}
         onClose={() => setEditing(null)}
+        onSaved={(message) => setSnack(message)}
+      />
+      <ManageTemplatesDialog
+        open={manageOpen}
+        onClose={() => setManageOpen(false)}
         onSaved={(message) => setSnack(message)}
       />
       <Snackbar

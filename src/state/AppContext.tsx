@@ -6,8 +6,18 @@ import {
   useReducer,
   type ReactNode,
 } from "react";
-import type { AppState, CustomKeyValue, Distro, Role, Template } from "../types";
+import type {
+  AppState,
+  CustomKeyValue,
+  Distro,
+  ParamDef,
+  ParamFamilyKey,
+  ParamsCatalog,
+  Role,
+  Template,
+} from "../types";
 import { seedTemplates } from "./seedData";
+import { SEED_PARAMS_CATALOG } from "../lib/paramCatalog";
 
 const STORAGE_KEY = "radius.adtags.v1";
 
@@ -16,6 +26,7 @@ const initialState: AppState = {
   templates: seedTemplates,
   distros: [],
   nextDistributionId: 12100,
+  paramsCatalog: SEED_PARAMS_CATALOG,
 };
 
 type Action =
@@ -26,7 +37,10 @@ type Action =
   | { type: "removeDistro"; id: string }
   | { type: "addTemplate"; template: Template }
   | { type: "updateTemplate"; template: Template }
-  | { type: "deleteTemplates"; ids: string[] };
+  | { type: "deleteTemplates"; ids: string[] }
+  | { type: "addParam"; family: ParamFamilyKey; param: ParamDef }
+  | { type: "updateParam"; family: ParamFamilyKey; param: ParamDef }
+  | { type: "deleteParam"; family: ParamFamilyKey; paramId: string };
 
 const reducer = (state: AppState, action: Action): AppState => {
   switch (action.type) {
@@ -71,6 +85,37 @@ const reducer = (state: AppState, action: Action): AppState => {
         templates: state.templates.filter((t) => !idSet.has(t.id)),
       };
     }
+    case "addParam":
+      return {
+        ...state,
+        paramsCatalog: {
+          ...state.paramsCatalog,
+          [action.family]: [
+            ...state.paramsCatalog[action.family],
+            action.param,
+          ],
+        },
+      };
+    case "updateParam":
+      return {
+        ...state,
+        paramsCatalog: {
+          ...state.paramsCatalog,
+          [action.family]: state.paramsCatalog[action.family].map((p) =>
+            p.id === action.param.id ? action.param : p,
+          ),
+        },
+      };
+    case "deleteParam":
+      return {
+        ...state,
+        paramsCatalog: {
+          ...state.paramsCatalog,
+          [action.family]: state.paramsCatalog[action.family].filter(
+            (p) => p.id !== action.paramId,
+          ),
+        },
+      };
     default:
       return state;
   }
@@ -85,6 +130,9 @@ interface AppContextValue {
   addTemplate: (template: Template) => void;
   updateTemplate: (template: Template) => void;
   deleteTemplates: (ids: string[]) => void;
+  addParam: (family: ParamFamilyKey, param: ParamDef) => void;
+  updateParam: (family: ParamFamilyKey, param: ParamDef) => void;
+  deleteParam: (family: ParamFamilyKey, paramId: string) => void;
   nextDistributionId: () => number;
 }
 
@@ -113,6 +161,13 @@ const migrateCustomFields = <T extends { customKeyValues: CustomKeyValue[] }>(
   };
 };
 
+const ensureCatalog = (raw: ParamsCatalog | undefined): ParamsCatalog => {
+  if (!raw || !raw.nexxen || !raw.ttd || !raw.creative) {
+    return SEED_PARAMS_CATALOG;
+  }
+  return raw;
+};
+
 const loadFromStorage = (): AppState | null => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -127,6 +182,7 @@ const loadFromStorage = (): AppState | null => {
       ...parsed,
       templates: parsed.templates.map(migrateCustomFields),
       distros: parsed.distros.map(migrateCustomFields),
+      paramsCatalog: ensureCatalog(parsed.paramsCatalog),
     };
   } catch {
     return null;
@@ -154,6 +210,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       updateTemplate: (template) =>
         dispatch({ type: "updateTemplate", template }),
       deleteTemplates: (ids) => dispatch({ type: "deleteTemplates", ids }),
+      addParam: (family, param) => dispatch({ type: "addParam", family, param }),
+      updateParam: (family, param) =>
+        dispatch({ type: "updateParam", family, param }),
+      deleteParam: (family, paramId) =>
+        dispatch({ type: "deleteParam", family, paramId }),
       nextDistributionId: () => state.nextDistributionId,
     }),
     [state],

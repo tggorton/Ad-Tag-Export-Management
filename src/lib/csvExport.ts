@@ -1,4 +1,4 @@
-import type { Distro } from "../types";
+import type { Distro, ParamsCatalog } from "../types";
 import { buildDistroUrl } from "./tagBuilder";
 
 const escapeCsv = (value: string): string => {
@@ -8,16 +8,23 @@ const escapeCsv = (value: string): string => {
   return value;
 };
 
-export const buildCsv = (distros: Distro[]): string => {
+export const buildCsv = (
+  distros: Distro[],
+  catalog: ParamsCatalog,
+): string => {
   const header = "Name,Url";
   const rows = distros.map(
-    (d) => `${escapeCsv(d.name)},${escapeCsv(buildDistroUrl(d))}`,
+    (d) => `${escapeCsv(d.name)},${escapeCsv(buildDistroUrl(d, catalog))}`,
   );
   return [header, ...rows].join("\n");
 };
 
-export const downloadCsv = (distros: Distro[], filename = "distros.csv") => {
-  const csv = buildCsv(distros);
+export const downloadCsv = (
+  distros: Distro[],
+  catalog: ParamsCatalog,
+  filename = "distros.csv",
+) => {
+  const csv = buildCsv(distros, catalog);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

@@ -20,7 +20,7 @@ const FIELDS: Field[] = [
   { label: "3rd Party Tag", value: "<not assigned>", decoration: "edit" },
   { label: "External Name", value: "<not assigned>", decoration: "edit" },
   { label: "Type", value: "video", decoration: "none" },
-  { label: "Creative", value: "<no creative assigned>", decoration: "none" },
+  { label: "Creative", value: "2 assigned", decoration: "none" },
 ];
 
 const Decoration = ({ kind }: { kind?: Field["decoration"] }): ReactNode => {

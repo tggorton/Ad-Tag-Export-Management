@@ -1,30 +1,25 @@
-import type { Distro, Template } from "../types";
-import {
-  CREATIVE_PARAMS,
-  familyParams,
-  findCreativeParam,
-  findParam,
-} from "./paramCatalog";
+import type { Distro, ParamsCatalog, Template } from "../types";
 
 type Buildable = Pick<
   Distro | Template,
   "family" | "selectedParams" | "selectedCreativeParams" | "customKeyValues"
 >;
 
-export const buildTagString = (entity: Buildable): string => {
+export const buildTagString = (
+  entity: Buildable,
+  catalog: ParamsCatalog,
+): string => {
   const parts: string[] = [];
 
-  for (const def of familyParams(entity.family)) {
+  for (const def of catalog[entity.family]) {
     if (entity.selectedParams.includes(def.id)) {
-      const found = findParam(entity.family, def.id);
-      if (found) parts.push(found.output);
+      parts.push(def.output);
     }
   }
 
-  for (const def of CREATIVE_PARAMS) {
+  for (const def of catalog.creative) {
     if (entity.selectedCreativeParams.includes(def.id)) {
-      const found = findCreativeParam(def.id);
-      if (found) parts.push(found.output);
+      parts.push(def.output);
     }
   }
 
@@ -38,5 +33,8 @@ export const buildTagString = (entity: Buildable): string => {
 
 const RADIUS_BASE = "https://radius.video/v1/distributions";
 
-export const buildDistroUrl = (distro: Distro): string =>
-  `${RADIUS_BASE}/${distro.distributionId}?line-item-id=${distro.lineItemId}${buildTagString(distro)}`;
+export const buildDistroUrl = (
+  distro: Distro,
+  catalog: ParamsCatalog,
+): string =>
+  `${RADIUS_BASE}/${distro.distributionId}?line-item-id=${distro.lineItemId}${buildTagString(distro, catalog)}`;

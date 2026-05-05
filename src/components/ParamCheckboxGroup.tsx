@@ -7,8 +7,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import type { ParamDef } from "../lib/paramCatalog";
 
@@ -17,9 +15,10 @@ interface Props {
   params: ParamDef[];
   selectedIds: string[];
   onChange: (next: string[]) => void;
-  /** When true, render the prototype +/trash/pencil toolbar next to the title (visual fidelity, non-functional). */
-  showToolbar?: boolean;
-  /** When true, the title is rendered in the primary color (matches "Nexxen Params" / "Creative Params" Figma styling). */
+  /** Renders the pencil/edit icon next to the title. Pass a handler to wire
+   * it to a manage-params dialog (handles add/edit/delete in one place). */
+  onEditRequest?: () => void;
+  /** When true, the title is rendered in the primary color. */
   primaryTitle?: boolean;
 }
 
@@ -28,7 +27,7 @@ export const ParamCheckboxGroup = ({
   params,
   selectedIds,
   onChange,
-  showToolbar = false,
+  onEditRequest,
   primaryTitle = true,
 }: Props) => {
   const allSelected = params.every((p) => selectedIds.includes(p.id));
@@ -64,24 +63,16 @@ export const ParamCheckboxGroup = ({
         >
           {title}
         </Typography>
-        {showToolbar && (
-          <Stack direction="row" spacing={0.25}>
-            <Tooltip title="Add (visual only)">
-              <IconButton size="small" sx={{ color: "text.primary" }}>
-                <AddCircleOutlineIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete (visual only)">
-              <IconButton size="small" sx={{ color: "text.primary" }}>
-                <DeleteOutlineIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Edit (visual only)">
-              <IconButton size="small" sx={{ color: "text.primary" }}>
-                <EditOutlinedIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Stack>
+        {onEditRequest && (
+          <Tooltip title="Add, edit, or remove parameters">
+            <IconButton
+              size="small"
+              onClick={onEditRequest}
+              sx={{ color: "text.primary" }}
+            >
+              <EditOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         )}
         <FormControlLabel
           control={

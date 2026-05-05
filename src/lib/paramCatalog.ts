@@ -1,13 +1,11 @@
-import type { TemplateFamily } from "../types";
+import type { ParamDef, ParamsCatalog } from "../types";
 
-export interface ParamDef {
-  id: string;
-  label: string;
-  output: string;
-}
+// Re-export the type for callers who already imported ParamDef from here.
+export type { ParamDef } from "../types";
 
-// Order in this array defines the on-screen 3-column grid order, top-to-bottom row-by-row.
-export const NEXXEN_PARAMS: ParamDef[] = [
+// Order in each array defines the on-screen 3-column grid order, top-to-bottom
+// row-by-row.
+export const SEED_NEXXEN_PARAMS: ParamDef[] = [
   { id: "app_bundle", label: "app_bundle", output: "&app_bundle=$!{APP_ID}" },
   { id: "auction_id", label: "auction_id", output: "&auction_id=$!{AD_CALL_ID}" },
   { id: "clicktracker", label: "clicktracker", output: "&clicktracker=XXCLICK_FORM_URL[]XX" },
@@ -23,7 +21,7 @@ export const NEXXEN_PARAMS: ParamDef[] = [
   { id: "nonskippable", label: "nonskippable", output: "&nonskippable=1" },
 ];
 
-export const TTD_PARAMS: ParamDef[] = [
+export const SEED_TTD_PARAMS: ParamDef[] = [
   { id: "clicktracer", label: "clicktracer", output: "&clicktracker=%%TTD_CLK_ESC%%" },
   { id: "dealid", label: "dealid", output: "&dealid=%%TTD_DEALID%%" },
   { id: "device_id", label: "device_id", output: "&device_id=%%TTD_DEVICEID%%" },
@@ -39,20 +37,15 @@ export const TTD_PARAMS: ParamDef[] = [
   { id: "nonskippable", label: "nonskippable", output: "&nonskippable=1" },
 ];
 
-export const CREATIVE_PARAMS: ParamDef[] = [
+export const SEED_CREATIVE_PARAMS: ParamDef[] = [
   { id: "autopop_first", label: "autopop_first", output: "&autopop_first=1" },
   { id: "player_font", label: "player_font", output: "&player_font=Montserrat" },
   { id: "cta", label: "cta", output: "&cta=1" },
   { id: "rand_titles", label: "rand_titles", output: "&rand_tiles=1" },
 ];
 
-export const familyParams = (family: TemplateFamily): ParamDef[] =>
-  family === "nexxen" ? NEXXEN_PARAMS : TTD_PARAMS;
-
-export const findParam = (
-  family: TemplateFamily,
-  id: string,
-): ParamDef | undefined => familyParams(family).find((p) => p.id === id);
-
-export const findCreativeParam = (id: string): ParamDef | undefined =>
-  CREATIVE_PARAMS.find((p) => p.id === id);
+export const SEED_PARAMS_CATALOG: ParamsCatalog = {
+  nexxen: SEED_NEXXEN_PARAMS,
+  ttd: SEED_TTD_PARAMS,
+  creative: SEED_CREATIVE_PARAMS,
+};

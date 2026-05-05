@@ -19,6 +19,12 @@ export interface Template {
   selectedCreativeParams: string[];
   customKeyValues: CustomKeyValue[];
   isBuiltIn?: boolean;
+  /**
+   * Optional advertiser scope. When set, the template only appears in the
+   * Tag Template dropdown for users on a campaign tied to this advertiser.
+   * Templates with no advertiserId are visible to everyone.
+   */
+  advertiserId?: string;
 }
 
 export interface Distro {
@@ -35,9 +41,24 @@ export interface Distro {
   createdAt: string;
 }
 
+export interface ParamDef {
+  id: string;
+  label: string;
+  output: string;
+}
+
+export interface ParamsCatalog {
+  nexxen: ParamDef[];
+  ttd: ParamDef[];
+  creative: ParamDef[];
+}
+
+export type ParamFamilyKey = "nexxen" | "ttd" | "creative";
+
 export interface AppState {
   role: Role;
   templates: Template[];
   distros: Distro[];
   nextDistributionId: number;
+  paramsCatalog: ParamsCatalog;
 }

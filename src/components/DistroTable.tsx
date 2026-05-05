@@ -17,6 +17,7 @@ import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { useState, type MouseEvent } from "react";
 import type { Distro } from "../types";
 import { buildDistroUrl } from "../lib/tagBuilder";
+import { useApp } from "../state/AppContext";
 
 interface Props {
   distros: Distro[];
@@ -26,6 +27,8 @@ interface Props {
 }
 
 export const DistroTable = ({ distros, onCopy, onEdit, onDelete }: Props) => {
+  const { state } = useApp();
+  const catalog = state.paramsCatalog;
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [activeDistro, setActiveDistro] = useState<Distro | null>(null);
 
@@ -74,7 +77,7 @@ export const DistroTable = ({ distros, onCopy, onEdit, onDelete }: Props) => {
         </TableHead>
         <TableBody>
           {distros.map((d) => {
-            const url = buildDistroUrl(d);
+            const url = buildDistroUrl(d, catalog);
             return (
               <TableRow key={d.id} hover>
                 <TableCell sx={{ maxWidth: 200 }}>
