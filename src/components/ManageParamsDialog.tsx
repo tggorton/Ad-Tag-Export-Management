@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../state/AppContext";
 import { newId } from "../lib/ids";
 import type { ParamFamilyKey } from "../types";
@@ -22,6 +22,7 @@ interface Props {
   open: boolean;
   family: ParamFamilyKey | null;
   onClose: () => void;
+  onSaved?: (message: string) => void;
 }
 
 const TITLES: Record<ParamFamilyKey, string> = {
@@ -30,18 +31,41 @@ const TITLES: Record<ParamFamilyKey, string> = {
   creative: "Manage Creative Params",
 };
 
-export const ManageParamsDialog = ({ open, family, onClose }: Props) => {
+const SECTION_NAMES: Record<ParamFamilyKey, string> = {
+  nexxen: "Nexxen Params",
+  ttd: "TTD Params",
+  creative: "Creative Params",
+};
+
+export const ManageParamsDialog = ({
+  open,
+  family,
+  onClose,
+  onSaved,
+}: Props) => {
   const { state, addParam, updateParam, deleteParam } = useApp();
   const [addMode, setAddMode] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [newOutput, setNewOutput] = useState("");
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
+  const lastRowRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setAddMode(false);
     setNewLabel("");
     setNewOutput("");
+    setPendingScrollId(null);
   }, [open]);
+
+  useEffect(() => {
+    if (!pendingScrollId) return;
+    lastRowRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+    setPendingScrollId(null);
+  }, [pendingScrollId]);
 
   if (!family) return null;
 
@@ -67,16 +91,21 @@ export const ManageParamsDialog = ({ open, family, onClose }: Props) => {
       )
     ) {
       deleteParam(family, id);
+      onSaved?.(`Removed "${label}" from ${SECTION_NAMES[family]}`);
     }
   };
 
   const handleAdd = () => {
     if (!newLabel.trim()) return;
+    const id = `param-${newId().slice(0, 8)}`;
+    const label = newLabel.trim();
     addParam(family, {
-      id: `param-${newId().slice(0, 8)}`,
-      label: newLabel.trim(),
+      id,
+      label,
       output: newOutput.trim(),
     });
+    onSaved?.(`Added "${label}" to ${SECTION_NAMES[family]}`);
+    setPendingScrollId(id);
     setNewLabel("");
     setNewOutput("");
     setAddMode(false);
@@ -131,12 +160,13 @@ export const ManageParamsDialog = ({ open, family, onClose }: Props) => {
               </Typography>
             ) : (
               <Stack spacing={1.25}>
-                {params.map((p) => (
+                {params.map((p, i) => (
                   <Stack
                     key={p.id}
                     direction="row"
                     spacing={1}
                     alignItems="center"
+                    ref={i === params.length - 1 ? lastRowRef : undefined}
                   >
                     <TextField
                       label="Label"

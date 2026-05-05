@@ -468,6 +468,7 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
         open={Boolean(manageParamsFamily)}
         family={manageParamsFamily}
         onClose={() => setManageParamsFamily(null)}
+        onSaved={onSaved}
       />
     </Dialog>
   );
