@@ -225,6 +225,30 @@ Wired both:
 
 ---
 
+### 2026-05-06 — Session 6: Documentation + (name, advertiser) uniqueness validation
+
+**Wall-clock span:** Afternoon, sparse-commit (one push at end of day). Commit: `82c50a5` (15:xx).
+
+**`SESSION_LOG.md` introduced.** User asked for a narrative companion to `TIME_LOG.md` so future sessions or a fresh project starting from this one's state has the human-side context — which decisions were debated, what trade-offs got weighed, what user-verbatim framing drove each major call. Modeled on the user's sample SESSION_LOG from another project. The doc lives at the project root, mirrors `TIME_LOG.md`'s session boundaries, and includes Future Considerations / Open Threads / Process Commitments sections plus a chronological commit reference table.
+
+**`(name, advertiser)` uniqueness validation in Manage Templates.** User: *"IF an Admin selects a template, and then is trying to 'save a new template' rather than 'updating' that particular template, then the Admin must provide a slightly different name. We would not want the users to see two of any template with the same name, as then it would be difficult to know which is which."* With a clarification: same name + different advertiser is fine because the dropdown renders "name — advertiser-XX", which differentiates them visually.
+
+The rule is uniqueness on the **(name, advertiserId) tuple**, not just name. Implementation:
+
+- Renamed the field-error state from boolean `nameError` to string `nameErrorMessage` so the helper text can be context-aware (different messages for "required" vs. "duplicate detected").
+- Added `findNameConflict(excludeId?)` which scans `state.templates` for any entry whose `(name, advertiserId)` matches the form's current values (case-insensitive, trim-aware, treating `undefined` and `""` advertiserId as equal).
+- Added `conflictMessage(conflict)` which returns a sentence explaining the existing template's advertiser scope and suggesting both resolutions: rename (e.g. `template-01` → `template-01b`) or pick a different advertiser.
+- `handleSaveNew` calls `findNameConflict()` (no exclude — any match is a conflict, since this is a new template).
+- `handleUpdate` calls `findNameConflict(selectedTemplate.id)` — excludes the template currently being updated, since updating a template to its own values is a no-op, not a conflict. Renaming/rescoping into another template's tuple does still get blocked.
+- Error clears on either name OR advertiser change (since either could resolve the conflict).
+- On block, the field gets the same scroll-into-view + auto-focus treatment as the empty-name validator — unmissable on shorter viewports.
+
+**Push** (`82c50a5`). Single commit covering: TIME_LOG.md (new), SESSION_LOG.md (new), `.claude/skills/log-time/SKILL.md` (new), `ManageTemplatesDialog.tsx` (uniqueness validation). All four artifacts served the same theme — durable engineering documentation + hardening of an existing flow before declaring "good for now."
+
+**Closing observation.** User flagged this as a stopping point: *"Okay. This should be good for now."* The prototype is feature-complete relative to the original brief: distros workflow + admin templates + advertiser scoping + mutable catalog + delete affordances + uniqueness guarantees. The doc artifacts (TIME_LOG / SESSION_LOG / log-time skill) make this state easy to resume from later or hand off cleanly to another developer or AI tool. If a future iteration begins here, this doc + the skill at `.claude/skills/log-time/` are the entry points for context.
+
+---
+
 ## Future considerations
 
 These are user-flagged items or implementation seams that are **not** part of the current build but that the structure should accommodate cleanly when they come up.
@@ -299,6 +323,7 @@ All commits on `main`, since project start.
 | 8 | `a96f735` | 04-29 14:08 | Decouple template name from distro name; add template delete + creatives |
 | 9 | `12b4306` | 05-05 15:04 | Split admin template management into dedicated dialog; mutable param catalog |
 | 10 | `432898e` | 05-05 15:31 | Notify and auto-scroll on param add/remove in ManageParamsDialog |
+| 11 | `82c50a5` | 05-06       | Enforce (name, advertiser) uniqueness on templates; add TIME_LOG / SESSION_LOG / log-time skill |
 
 ---
 

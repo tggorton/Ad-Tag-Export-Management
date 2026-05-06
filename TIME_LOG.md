@@ -176,6 +176,21 @@ working stretches. Commits: `12b4306` (05-05 15:04), `432898e`
 | Final push of session | 1m | 2m | |
 | **Session subtotal** | **~64m** | **~117m** | Recalibrated down from ~263m first-cut after user pointed out wall-clock between sparse commits significantly over-credits AI Work — most of the elapsed window was conversation iterations, verification, and idle gaps rather than active tool time. |
 
+### 2026-05-06 — Session 6: Documentation + (name, advertiser) uniqueness validation
+
+**Wall-clock span:** afternoon, sparse-commit (one push at the end).
+Commit: `82c50a5`.
+
+| Block | Prompting | AI Work | Notes |
+|---|---:|---:|---|
+| Initial `TIME_LOG.md` creation following the user's sample (methodology, 5 session blocks anchored on git commit timestamps, prompting archetypes, running totals) | 8m | 14m | Long-form doc write. |
+| Recalibration round 1 — Session 5 down from ~263m → ~117m after user pushback that wall-clock between sparse commits over-credits AI Work | 4m | 4m | Decision prompt: *"You did not spend 4 straight hours on this project."* |
+| Recalibration round 2 — apply same logic to S1–S4; create `.claude/skills/log-time/SKILL.md` codifying the density-aware methodology | 6m | 8m | Intricate prompt asking for both retroactive recalibration + skill creation. Total AI Work dropped ~11h → ~6.5h after recalibration. |
+| `SESSION_LOG.md` creation — narrative companion doc with per-session decisions, verbatim user quotes, multi-iteration sagas, future considerations + open threads + commit reference table | 8m | 16m | Largest doc-write of the day. Modeled on the user's sample SESSION_LOG. |
+| Manage Templates: enforce `(name, advertiser)` uniqueness on Save New + Update. Boolean `nameError` → string `nameErrorMessage` (so error helper text is context-aware: required vs. duplicate). New `findNameConflict(excludeId?)` + `conflictMessage(conflict)` helpers. Error clears on name OR advertiser change. Scroll-into-view + focus on validation failure (existing pattern) | 8m | 10m | Intricate prompt with explicit example list (`template-01` / `template-01b` / `template-01 — advertiser-01`). |
+| Push (`82c50a5`, single commit covering all the above) + this time-log + session-log update | 3m | 6m | |
+| **Session subtotal** | **~37m** | **~58m** | Sparse session by commit count (one push at end of day). Bulk of AI Work was long-form doc generation (TIME_LOG + SESSION_LOG + skill); the uniqueness validation was a smaller code change at the end. |
+
 ---
 
 ## Running totals
@@ -187,7 +202,8 @@ working stretches. Commits: `12b4306` (05-05 15:04), `432898e`
 | Session 3 (2026-04-28) — Admin save-flow polish | 15m | 35m |
 | Session 4 (2026-04-29) — Name decouple + delete + creatives | 26m | 55m |
 | Session 5 (2026-04-30 → 05-05) — Manage Templates split + mutable catalog | 64m | 117m |
-| **Total** | **~3h 02m** | **~6h 27m** |
+| Session 6 (2026-05-06) — Documentation + uniqueness validation | 37m | 58m |
+| **Total** | **~3h 39m** | **~7h 25m** |
 
 ---
 
