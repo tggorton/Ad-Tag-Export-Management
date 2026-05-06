@@ -1,0 +1,205 @@
+# Time Log — Radius Ad Tags Prototype
+
+Tracks approximate effort across the project's lifecycle in two columns:
+
+1. **AI Work** — wall-clock between meaningful checkpoints (commits, push
+   points), minus obvious idle gaps.
+2. **Prompting** — user time spent reading my output, deciding next
+   steps, and typing prompts. Estimated per-message via archetype.
+
+If a Prompting estimate feels off, say so and I'll recalibrate the
+per-archetype defaults so future entries land closer.
+
+## Methodology
+
+### AI Work column (well-grounded)
+
+Anchored on git commit timestamps and tool-call cadence. Each block is
+wall-clock between commits or visible session boundaries, minus obvious
+idle stretches (long gaps between messages where the user was clearly
+away). Roughly accurate ±5–10 min.
+
+### Prompting column (estimated)
+
+Per user message:
+
+```
+prompting_time =
+    reading_time   (user reading my prior response)
+  + thinking_time  (deciding, weighing options)
+  + typing_time    (user_message_chars / ~130 chars-per-min)
+```
+
+Three rough archetypes I classify each user message into:
+
+| Type | Pattern | Reading | Thinking | Typing |
+|---|---|---:|---:|---:|
+| **Quick approval** | "go", "yes", "looks good" | 1–2m | ≤30s | ≤30s |
+| **Decision / lightweight** | choosing between options, brief feedback | 2–3m | 1–2m | 1–3m |
+| **Intricate** | technical prompts with context, bug reports with screenshots/repros, multi-decision messages | 3–5m | 3–8m | 4–10m |
+
+**What's NOT counted as Prompting:**
+
+- Time the AI is working (tool calls, file writes, builds, agent
+  exploration) — user can be doing other things in parallel, even if
+  some of it requires occasional approval clicks. Those clicks
+  themselves are minimal and absorbed into the next message.
+- Visual verification time clicking through the live app between
+  prompts.
+- Breaks, meetings, or errands during long gaps.
+
+**What IS counted:**
+
+- Reading my output before responding.
+- Deciding on next steps or approach.
+- Typing the message itself.
+- Reviewing actual file changes before replying (e.g. opening files I
+  edited and reading them).
+
+### Calibration note
+
+Commit-timestamp arithmetic over-credits AI Work for stretches where
+the human is actually doing the work — reading, taking screenshots,
+composing a debug report, verifying in the browser, away from the
+desk. The AI is *not* running tools during those stretches even
+though the wall-clock keeps moving.
+
+The reduction factor depends on commit density. Dense-commit sessions
+(steady AI-driven cadence) need a smaller cut than sparse-commit
+sessions (one big commit covers hours of conversation):
+
+| Commit pattern | Reduction off raw wall-clock |
+|---|---|
+| **Dense** (multiple commits per hour) | 20–25% |
+| **Moderate** (1–2 commits per hour) | 30–40% |
+| **Sparse** (1 commit per several hours, conversation-heavy) | 50–60% |
+
+**Cross-session recalibration (2026-05-05).** Initial pass used a
+flat ~20–25% reduction across all sessions — too generous for the
+sparse-commit days. After user feedback that Session 5 (4h window,
+2 commits) wasn't actually 4h of active AI tool time, applied the
+density-aware reductions retroactively to all five sessions:
+
+| Session | Commits | Density | Original | Recalibrated | Cut |
+|---|---:|---|---:|---:|---:|
+| S1 (04-25) | 2 | Moderate (heavy scaffolding) | 188m | 120m | 36% |
+| S2 (04-27) | 3 | Moderate | 93m | 60m | 35% |
+| S3 (04-28) | 2 | Moderate-dense | 45m | 35m | 22% |
+| S4 (04-29) | 1 | Sparse | 98m | 55m | 44% |
+| S5 (05-05) | 2 | Sparse | 263m | 117m | 56% |
+
+Prompting figures stayed unchanged — those are anchored on
+per-message archetype × character count, and the human is the
+authority on their own time anyway. The codified methodology lives
+at `.claude/skills/log-time/SKILL.md` for future sessions.
+
+---
+
+## Sessions
+
+### 2026-04-25 — Session 1: Plan + scaffold + style iteration + first push
+
+**Wall-clock span:** afternoon, with several hours of style iteration.
+Commits: `fe3a985` (16:10).
+
+| Block | Prompting | AI Work | Notes |
+|---|---:|---:|---|
+| Plan mode — 3 Explore agents (Primary-Page, Admin/templates, KV-Macros + CSV) running in parallel reading the `_Code-Reference/` and `_Image-Reference/` folders, plan file iteration | 12m | 16m | Decision-heavy stretch: stack picks (Vite + TS + MUI), persistence (localStorage), role gating (header toggle). |
+| Vite + MUI scaffold (~20 source files: types, theme, paramCatalog, tagBuilder, csvExport, AppContext, seedData, all stub components) + first `npm install` | 6m | 35m | Mostly silent AI work; user approving in chunks. Heavy file-write block. |
+| Restyle pass 1 — brighter pink primary, exact dark backgrounds, refined component overrides; also restyling the editor dialog (large pink title, pink section labels, +/trash/pencil toolbar visual, solid pink Add KV/Add Macro buttons, CANCEL+ADD footer) | 8m | 22m | Driven by a screenshot from the user comparing my output to the Figma reference. |
+| Restyle pass 2 — full chrome restructure: `KervLogo` SVG (6 polygons copied from prior project), 80px sidebar with external icon URLs, top bar (breadcrumb + role toggle + bell), hero card → horizontal 11-field grid, Creatives/Pixels stub sections, outlined pink action buttons | 14m | 32m | Intricate prompts with the line-item-multi-creative target screenshot + agent-driven repo clone to extract exact theme values. |
+| Layout fix — content full width hugging right edge (drop `maxWidth: 1440`) | 2m | 2m | Quick decision. |
+| Tag Template label/placeholder overlap bug fix | 4m | 3m | Intricate prompt with screenshot; `InputLabelProps={{ shrink: true }}` + custom `renderValue`. |
+| `git init` + first push (rebased on remote auto-README) | 4m | 10m | Commit `fe3a985`. PAT used inline only. |
+| **Session subtotal** | **~50m** | **~120m** | Recalibrated from ~188m. Moderate density (2 commits in a multi-hour scaffolding day). Heaviest block was the file scaffold; restyle passes were chunky but conversational. |
+
+### 2026-04-27 — Session 2: Merge add flow + Save/Update gating + NUL fix
+
+**Wall-clock span:** ~14:00 → ~16:30. Commits: `6488ccb` (15:09),
+`65bf264` (15:30), `6b86904` (16:13).
+
+| Block | Prompting | AI Work | Notes |
+|---|---:|---:|---|
+| Merge two-step Add flow into a single editor (template dropdown moved inline, autofill on pick, admin radio inside the editor itself); also collapsed the dual KV/Macro UI into a single `+ Add Key Value / Macro` button + unified `customKeyValues` data model with localStorage migration; deleted `AddDistroDialog.tsx`, `CustomKeyValueList.tsx`, `CustomMacroList.tsx` | 12m | 32m | Single bundled commit `6488ccb` — large refactor. |
+| Reposition Distro Name + Tag Template (first-cut moved them to bottom; user clarified intent → swap order at top: Distro Name first, Tag Template second) | 4m | 5m | Decision prompt that I initially misread as "move location." |
+| Disable "Update Template" until form actually diverges from the picked template's saved configuration | 4m | 10m | Commit `65bf264` — added `originalTemplate` + `hasTemplateChanges` useMemo with set/array comparators. |
+| NUL-byte cleanup in TagEditorDialog (caught on push verification — file showed binary diff, `JSON` template literal had embedded `\0` separators) | 3m | 5m | Commit `6b86904` — replaced with `JSON.stringify([key, value])`. |
+| Two pushes (one rejected for non-fast-forward → fetch + rebase + push; one straightforward) | 4m | 8m | |
+| **Session subtotal** | **~27m** | **~60m** | Recalibrated from ~93m. Moderate density (3 commits in ~2.5h). |
+
+### 2026-04-28 — Session 3: Admin save-flow polish
+
+**Wall-clock span:** ~13:30 → ~15:00. Commits: `92b362c` (13:57),
+`5ac6090` (14:50).
+
+| Block | Prompting | AI Work | Notes |
+|---|---:|---:|---|
+| Stop auto-filling Distro Name when a template is picked + name validation alert (scroll-into-view + focus on validation failure so the alert is unmissable on shorter viewports) | 5m | 14m | Commit `92b362c` first half. |
+| Restyle the Save / Update sub-dialog to match the original AddDistroDialog style (plain h6 title, close icon, radio group, single Save button); rename "Save as New Template" → "Save New Template" | 4m | 9m | Commit `92b362c` second half. |
+| Keep editor open after Save Template / Update Template (drop `onClose()` from persist functions; auto-select newly-saved template in the dropdown) | 4m | 8m | Commit `5ac6090`. |
+| Push | 2m | 4m | |
+| **Session subtotal** | **~15m** | **~35m** | Recalibrated from ~45m. Moderate-dense (2 commits in ~1h, focused work). |
+
+### 2026-04-29 — Session 4: Template name decouple + multi-select template delete + creatives stubs
+
+**Wall-clock span:** ~13:00 → ~15:30. Commit: `a96f735` (14:08).
+
+| Block | Prompting | AI Work | Notes |
+|---|---:|---:|---|
+| Decouple Template Name from Distro Name (separate `templateNameDraft` state, validation moved to template-name field for save-template actions, `Distro Name` no longer required for template ops) | 6m | 14m | |
+| Save / Update sub-dialog: replace Template Name TextField with `Autocomplete` (`freeSolo`, options = all templates) so admin can pick a different template to update OR rename via free text; track `updateTargetId` separately from the editor's picked `templateId` | 8m | 17m | |
+| Multi-select **Delete Templates** dialog + admin-only "Delete templates…" link under the dropdown; reducer action `deleteTemplates(ids)`; drop the auto-merge-built-ins-on-load behavior so admin deletions persist across reloads | 6m | 14m | New file `DeleteTemplatesDialog.tsx`. |
+| Two stub creatives in the Creatives section (Stratos_Hero_30s, Stratos_Cutdown_15s) so the page reads as a populated line item; new columns Name / Creative ID / Playback Mode / Status / Weighting / Actions | 3m | 6m | |
+| Misc UI: drop "…" + capitalize "Delete Templates" link | 1m | 2m | Quick adjustment. |
+| Push | 2m | 2m | Commit `a96f735`. |
+| **Session subtotal** | **~26m** | **~55m** | Recalibrated from ~98m. Sparse (single bundled commit covering several distinct features). |
+
+### 2026-04-30 → 2026-05-05 — Session 5: Manage Templates dialog + mutable catalog + notifications
+
+**Wall-clock span:** spread across several days; user away between
+working stretches. Commits: `12b4306` (05-05 15:04), `432898e`
+(05-05 15:31).
+
+| Block | Prompting | AI Work | Notes |
+|---|---:|---:|---|
+| Add `advertiserId?` to Template + advertiser scoping (`CURRENT_ADVERTISER_ID = "advertiser-01"`, options 01–12); filter the main Tag Template dropdown by visibility; Save/Update modal Advertiser select; persist `advertiserId` on save/update | 10m | 15m | New file `lib/advertisers.ts`. |
+| Update Existing path: replace Template Name TextField with `Autocomplete`; update behaves as both target picker and renamer | 6m | 10m | Some friction iterating on UX semantics (pick-vs-type ambiguity). |
+| **Major refactor — split admin functions out of TagEditorDialog into a dedicated `ManageTemplatesDialog`.** New admin-only "Manage Templates" button next to "+ Add Distribution Tag" in DistrosSection. TagEditorDialog now role-agnostic. New dialog has its own state shape, Template Name field (no Distro Name), all-templates dropdown (no advertiser filter), advertiser dropdown, Save New / Update / multi-select Delete affordances. | 14m | 30m | Largest single block of the session. |
+| Strip `+ / trash / pencil` toolbar from the regular Add Distribution Tag editor | 2m | 2m | Quick decision. |
+| **Mutable param catalog** — moved Nexxen / TTD / Creative param lists from static constants into AppState (`paramsCatalog`); reducer actions `addParam` / `updateParam` / `deleteParam`; localStorage migration; refactored `buildTagString` + `buildDistroUrl` + `csvExport` to take catalog as an arg; threaded through every consumer | 8m | 22m | Touched: `types.ts`, `paramCatalog.ts`, `tagBuilder.ts`, `csvExport.ts`, `AppContext.tsx`, every component consuming build helpers. |
+| Functional toolbar inside Manage Templates — `ParamCheckboxGroup` accepts `onEditRequest` callback; new `ManageParamsDialog` lets admin inline-edit Label/Output, delete per row, and `+ Add Param` at the bottom; toolbar reduced from three icons to a single pencil after iteration | 9m | 15m | Iterated on the toolbar shape (started with all three, user asked to consolidate). |
+| Save/Update sub-dialog name field: pop the Template Name input into the modal itself with radio-driven default | 5m | 8m | Decoupled flow per user clarification. |
+| Drop "Delete Template" footer button from Manage Templates (kept in the multi-select Delete Templates panel) | 1m | 1m | Quick cleanup. |
+| Add `showToolbar` to Creative Params section + small copy fix ("Admins see every template here…" helper line removed) + `2 assigned` Creative count on the hero card | 3m | 3m | Small polish prompts. |
+| Push (single big commit covering all the above) | 2m | 3m | Commit `12b4306`. |
+| Param add/remove notifications + scroll-to-new-param in `ManageParamsDialog` (snackbar `Added "<label>" to <Section> Params` / `Removed "<label>" from <Section> Params`; `lastRowRef` + `scrollIntoView`) | 3m | 6m | Commit `432898e`. |
+| Final push of session | 1m | 2m | |
+| **Session subtotal** | **~64m** | **~117m** | Recalibrated down from ~263m first-cut after user pointed out wall-clock between sparse commits significantly over-credits AI Work — most of the elapsed window was conversation iterations, verification, and idle gaps rather than active tool time. |
+
+---
+
+## Running totals
+
+| | Prompting | AI Work |
+|---|---:|---:|
+| Session 1 (2026-04-25) — Plan + scaffold + style + first push | 50m | 120m |
+| Session 2 (2026-04-27) — Merge flows + gating + NUL fix | 27m | 60m |
+| Session 3 (2026-04-28) — Admin save-flow polish | 15m | 35m |
+| Session 4 (2026-04-29) — Name decouple + delete + creatives | 26m | 55m |
+| Session 5 (2026-04-30 → 05-05) — Manage Templates split + mutable catalog | 64m | 117m |
+| **Total** | **~3h 02m** | **~6h 27m** |
+
+---
+
+## How this gets updated
+
+After each push (or whenever you ask for a checkpoint), I append a row
+to the current session's table. AI Work is anchored on commit
+timestamps; Prompting follows the methodology above.
+
+You can adjust any Prompting estimate that feels off — when you do,
+mention it and I'll also recalibrate the per-archetype defaults so
+future estimates land closer.
+
+If you want a finer-grained breakdown (per-commit instead of per-block),
+or a separate calendar-day rollup for reporting, say the word.

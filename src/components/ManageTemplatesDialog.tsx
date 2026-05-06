@@ -86,7 +86,7 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
 
   const [selectedId, setSelectedId] = useState<string>("");
   const [form, setForm] = useState<ManageFormState>(emptyManageState);
-  const [nameError, setNameError] = useState(false);
+  const [nameErrorMessage, setNameErrorMessage] = useState<string>("");
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [manageParamsFamily, setManageParamsFamily] =
     useState<ParamFamilyKey | null>(null);
@@ -96,7 +96,7 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
     if (!open) return;
     setSelectedId("");
     setForm(emptyManageState());
-    setNameError(false);
+    setNameErrorMessage("");
     setBulkDeleteOpen(false);
     setManageParamsFamily(null);
   }, [open]);
@@ -127,7 +127,7 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
 
   const handleTemplatePick = (id: string) => {
     setSelectedId(id);
-    setNameError(false);
+    setNameErrorMessage("");
     if (!id) {
       setForm(emptyManageState());
       return;
@@ -148,12 +148,16 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
 
   const handleNameChange = (value: string) => {
     update("templateName", value);
-    if (nameError && value.trim().length > 0) setNameError(false);
+    if (nameErrorMessage) setNameErrorMessage("");
   };
 
-  const requireName = (): boolean => {
-    if (form.templateName.trim().length > 0) return true;
-    setNameError(true);
+  const handleAdvertiserChange = (value: string) => {
+    update("advertiserId", value);
+    if (nameErrorMessage) setNameErrorMessage("");
+  };
+
+  const flagNameError = (message: string) => {
+    setNameErrorMessage(message);
     nameInputRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "center",
@@ -162,7 +166,37 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
       () => nameInputRef.current?.focus({ preventScroll: true }),
       120,
     );
+  };
+
+  const requireName = (): boolean => {
+    if (form.templateName.trim().length > 0) return true;
+    flagNameError("Template Name is required");
     return false;
+  };
+
+  /**
+   * Templates are uniquely identified by the (name, advertiserId) tuple. Two
+   * templates with identical name + advertiser would be indistinguishable in
+   * the dropdown; the user explicitly does not want this. Same name + a
+   * different advertiser is fine — the dropdown renders "name — advertiser-XX"
+   * so they're visually distinguishable.
+   */
+  const findNameConflict = (excludeId?: string) => {
+    const targetName = form.templateName.trim().toLowerCase();
+    const targetAdv = form.advertiserId || undefined;
+    return state.templates.find(
+      (t) =>
+        t.id !== excludeId &&
+        t.name.trim().toLowerCase() === targetName &&
+        (t.advertiserId ?? undefined) === targetAdv,
+    );
+  };
+
+  const conflictMessage = (conflict: Template): string => {
+    const advClause = conflict.advertiserId
+      ? `for advertiser "${conflict.advertiserId}"`
+      : `with no advertiser scope`;
+    return `A template named "${conflict.name}" ${advClause} already exists. Use a different name (e.g. "${conflict.name}b") or pick a different advertiser to differentiate.`;
   };
 
   // Save New is enabled when there's any meaningful configuration to save.
@@ -208,6 +242,14 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
 
   const handleSaveNew = () => {
     if (!requireName()) return;
+    // Block duplicate (name, advertiser) tuples so the dropdown stays
+    // unambiguous. Don't exclude any existing template — this is a brand-new
+    // template, so any existing match is a conflict.
+    const conflict = findNameConflict();
+    if (conflict) {
+      flagNameError(conflictMessage(conflict));
+      return;
+    }
     const newTemplate: Template = {
       id: `tpl-${newId().slice(0, 8)}`,
       name: form.templateName.trim(),
@@ -227,6 +269,15 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
   const handleUpdate = () => {
     if (!selectedTemplate) return;
     if (!requireName()) return;
+    // For Update, exclude the template being updated from the conflict scan —
+    // updating a template to its own current (name, advertiser) is a no-op,
+    // not a conflict. But renaming/rescoping into another existing template's
+    // tuple still gets blocked.
+    const conflict = findNameConflict(selectedTemplate.id);
+    if (conflict) {
+      flagNameError(conflictMessage(conflict));
+      return;
+    }
     const updated: Template = {
       ...selectedTemplate,
       name: form.templateName.trim(),
@@ -297,8 +348,8 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
-            error={nameError}
-            helperText={nameError ? "Template Name is required" : undefined}
+            error={Boolean(nameErrorMessage)}
+            helperText={nameErrorMessage || undefined}
             inputRef={nameInputRef}
           />
 
@@ -354,7 +405,7 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
             select
             label="Advertiser"
             value={form.advertiserId}
-            onChange={(e) => update("advertiserId", e.target.value)}
+            onChange={(e) => handleAdvertiserChange(e.target.value)}
             size="medium"
             fullWidth
             InputLabelProps={{ shrink: true }}
