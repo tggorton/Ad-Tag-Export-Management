@@ -29,6 +29,7 @@ interface Props {
 export const DistroTable = ({ distros, onCopy, onEdit, onDelete }: Props) => {
   const { state } = useApp();
   const catalog = state.paramsCatalog;
+  const regions = state.regions;
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [activeDistro, setActiveDistro] = useState<Distro | null>(null);
 
@@ -77,7 +78,7 @@ export const DistroTable = ({ distros, onCopy, onEdit, onDelete }: Props) => {
         </TableHead>
         <TableBody>
           {distros.map((d) => {
-            const url = buildDistroUrl(d, catalog);
+            const url = buildDistroUrl(d, catalog, regions);
             return (
               <TableRow key={d.id} hover>
                 <TableCell sx={{ maxWidth: 200 }}>

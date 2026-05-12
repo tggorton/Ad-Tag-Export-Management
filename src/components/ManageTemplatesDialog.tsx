@@ -17,9 +17,11 @@ import {
   Tab,
   Tabs,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   CustomKeyValue,
@@ -37,6 +39,7 @@ import { ParamCheckboxGroup } from "./ParamCheckboxGroup";
 import { CustomFieldsSection } from "./CustomFieldsSection";
 import { DeleteTemplatesDialog } from "./DeleteTemplatesDialog";
 import { ManageParamsDialog } from "./ManageParamsDialog";
+import { ManageRegionsDialog } from "./ManageRegionsDialog";
 
 interface ManageFormState {
   templateName: string;
@@ -48,17 +51,11 @@ interface ManageFormState {
   customKeyValues: CustomKeyValue[];
 }
 
-const REGIONS: Array<{ value: Region; label: string }> = [
-  { value: "us-east-1", label: "Default (us-east-1)" },
-  { value: "australia", label: "Australia" },
-  { value: "europe", label: "Europe" },
-];
-
 const emptyManageState = (): ManageFormState => ({
   templateName: "",
   advertiserId: "",
   family: "nexxen",
-  region: "us-east-1",
+  region: "usa",
   selectedParams: [],
   selectedCreativeParams: [],
   customKeyValues: [],
@@ -90,6 +87,7 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [manageParamsFamily, setManageParamsFamily] =
     useState<ParamFamilyKey | null>(null);
+  const [manageRegionsOpen, setManageRegionsOpen] = useState(false);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -99,6 +97,7 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
     setNameErrorMessage("");
     setBulkDeleteOpen(false);
     setManageParamsFamily(null);
+    setManageRegionsOpen(false);
   }, [open]);
 
   const tagString = useMemo(
@@ -420,28 +419,38 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
           </TextField>
 
           <FormControl>
-            <FormLabel
-              sx={{
-                color: "primary.main",
-                "&.Mui-focused": { color: "primary.main" },
-                fontSize: 14,
-                fontWeight: 500,
-                mb: 0.5,
-              }}
-            >
-              Region
-            </FormLabel>
+            <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.5 }}>
+              <FormLabel
+                sx={{
+                  color: "primary.main",
+                  "&.Mui-focused": { color: "primary.main" },
+                  fontSize: 14,
+                  fontWeight: 500,
+                }}
+              >
+                Region
+              </FormLabel>
+              <Tooltip title="Add, edit, or remove regions">
+                <IconButton
+                  size="small"
+                  onClick={() => setManageRegionsOpen(true)}
+                  sx={{ color: "text.primary" }}
+                >
+                  <EditOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
             <RadioGroup
               row
               value={form.region}
               onChange={(e) => update("region", e.target.value as Region)}
             >
-              {REGIONS.map((r) => (
+              {state.regions.map((r) => (
                 <FormControlLabel
-                  key={r.value}
-                  value={r.value}
+                  key={r.id}
+                  value={r.id}
                   control={<Radio size="small" />}
-                  label={<Typography variant="body2">{r.label}</Typography>}
+                  label={<Typography variant="body2">{r.name}</Typography>}
                 />
               ))}
             </RadioGroup>
@@ -519,6 +528,11 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
         open={Boolean(manageParamsFamily)}
         family={manageParamsFamily}
         onClose={() => setManageParamsFamily(null)}
+        onSaved={onSaved}
+      />
+      <ManageRegionsDialog
+        open={manageRegionsOpen}
+        onClose={() => setManageRegionsOpen(false)}
         onSaved={onSaved}
       />
     </Dialog>

@@ -1,4 +1,4 @@
-import type { Distro, ParamsCatalog, Template } from "../types";
+import type { Distro, ParamsCatalog, RegionDef, Template } from "../types";
 
 type Buildable = Pick<
   Distro | Template,
@@ -31,10 +31,14 @@ export const buildTagString = (
   return parts.join("");
 };
 
-const RADIUS_BASE = "https://radius.video/v1/distributions";
+const FALLBACK_BASE_URL = "https://radius.video/v1/distributions";
 
 export const buildDistroUrl = (
   distro: Distro,
   catalog: ParamsCatalog,
-): string =>
-  `${RADIUS_BASE}/${distro.distributionId}?line-item-id=${distro.lineItemId}${buildTagString(distro, catalog)}`;
+  regions: RegionDef[],
+): string => {
+  const region = regions.find((r) => r.id === distro.region);
+  const base = region?.baseUrl?.trim() || FALLBACK_BASE_URL;
+  return `${base}/${distro.distributionId}?line-item-id=${distro.lineItemId}${buildTagString(distro, catalog)}`;
+};

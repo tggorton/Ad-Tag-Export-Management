@@ -19,7 +19,7 @@ export const DistrosSection = () => {
 
   const handleCopy = async (distro: Distro) => {
     await navigator.clipboard.writeText(
-      buildDistroUrl(distro, state.paramsCatalog),
+      buildDistroUrl(distro, state.paramsCatalog, state.regions),
     );
     setSnack(`Copied tag URL for "${distro.name}"`);
   };
@@ -38,7 +38,7 @@ export const DistrosSection = () => {
       setSnack("No distributions to export");
       return;
     }
-    downloadCsv(state.distros, state.paramsCatalog);
+    downloadCsv(state.distros, state.paramsCatalog, state.regions);
     setSnack(`Exported ${state.distros.length} distribution(s) to CSV`);
   };
 

@@ -1,11 +1,39 @@
-import type { Template } from "../types";
+import type { RegionDef, Template } from "../types";
+
+export const seedRegions: RegionDef[] = [
+  {
+    id: "usa",
+    name: "USA (Standard)",
+    baseUrl: "https://radius.video/v1/distributions",
+  },
+  {
+    id: "mexico",
+    name: "Mexico",
+    baseUrl: "https://mx.radius.video/v1/distributions",
+  },
+  {
+    id: "brazil",
+    name: "Brazil",
+    baseUrl: "https://sa.radius.video/v1/distributions",
+  },
+  {
+    id: "uk-europe",
+    name: "UK / Europe",
+    baseUrl: "https://eu.radius.video/v1/distributions",
+  },
+  {
+    id: "australia",
+    name: "Australia",
+    baseUrl: "https://au.radius.video/v1/distributions",
+  },
+];
 
 export const seedTemplates: Template[] = [
   {
     id: "nexxen-1",
     name: "NEXXEN-1",
     family: "nexxen",
-    region: "us-east-1",
+    region: "usa",
     selectedParams: [
       "app_bundle",
       "auction_id",
@@ -23,7 +51,7 @@ export const seedTemplates: Template[] = [
     id: "nexxen-2",
     name: "NEXXEN-2",
     family: "nexxen",
-    region: "us-east-1",
+    region: "usa",
     selectedParams: [
       "app_bundle",
       "auction_id",
@@ -40,7 +68,7 @@ export const seedTemplates: Template[] = [
     id: "nexxen-3",
     name: "NEXXEN-3",
     family: "nexxen",
-    region: "us-east-1",
+    region: "usa",
     selectedParams: [
       "tag",
       "AppBundle",
@@ -57,7 +85,7 @@ export const seedTemplates: Template[] = [
     id: "ttd-1",
     name: "TTD-1",
     family: "ttd",
-    region: "us-east-1",
+    region: "usa",
     selectedParams: [
       "clicktracer",
       "dealid",
@@ -73,7 +101,7 @@ export const seedTemplates: Template[] = [
     id: "ttd-2",
     name: "TTD-2",
     family: "ttd",
-    region: "us-east-1",
+    region: "usa",
     selectedParams: [
       "TTD_Auction_Macro",
       "TTD_ZIP_DYNAMIC_MACRO",
@@ -89,7 +117,7 @@ export const seedTemplates: Template[] = [
     id: "ttd-3",
     name: "TTD-3",
     family: "ttd",
-    region: "us-east-1",
+    region: "usa",
     selectedParams: [
       "tag",
       "AdImpression",

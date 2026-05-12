@@ -45,16 +45,10 @@ interface FormState {
   customKeyValues: CustomKeyValue[];
 }
 
-const REGIONS: Array<{ value: Region; label: string }> = [
-  { value: "us-east-1", label: "Default (us-east-1)" },
-  { value: "australia", label: "Australia" },
-  { value: "europe", label: "Europe" },
-];
-
 const emptyFormState = (): FormState => ({
   name: "",
   family: "nexxen",
-  region: "us-east-1",
+  region: "usa",
   selectedParams: [],
   selectedCreativeParams: [],
   customKeyValues: [],
@@ -304,12 +298,12 @@ export const TagEditorDialog = ({
               value={form.region}
               onChange={(e) => update("region", e.target.value as Region)}
             >
-              {REGIONS.map((r) => (
+              {state.regions.map((r) => (
                 <FormControlLabel
-                  key={r.value}
-                  value={r.value}
+                  key={r.id}
+                  value={r.id}
                   control={<Radio size="small" />}
-                  label={<Typography variant="body2">{r.label}</Typography>}
+                  label={<Typography variant="body2">{r.name}</Typography>}
                 />
               ))}
             </RadioGroup>

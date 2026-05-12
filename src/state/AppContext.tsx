@@ -13,10 +13,11 @@ import type {
   ParamDef,
   ParamFamilyKey,
   ParamsCatalog,
+  RegionDef,
   Role,
   Template,
 } from "../types";
-import { seedTemplates } from "./seedData";
+import { seedRegions, seedTemplates } from "./seedData";
 import { SEED_PARAMS_CATALOG } from "../lib/paramCatalog";
 
 const STORAGE_KEY = "radius.adtags.v1";
@@ -27,6 +28,7 @@ const initialState: AppState = {
   distros: [],
   nextDistributionId: 12100,
   paramsCatalog: SEED_PARAMS_CATALOG,
+  regions: seedRegions,
 };
 
 type Action =
@@ -40,7 +42,10 @@ type Action =
   | { type: "deleteTemplates"; ids: string[] }
   | { type: "addParam"; family: ParamFamilyKey; param: ParamDef }
   | { type: "updateParam"; family: ParamFamilyKey; param: ParamDef }
-  | { type: "deleteParam"; family: ParamFamilyKey; paramId: string };
+  | { type: "deleteParam"; family: ParamFamilyKey; paramId: string }
+  | { type: "addRegion"; region: RegionDef }
+  | { type: "updateRegion"; region: RegionDef }
+  | { type: "deleteRegion"; id: string };
 
 const reducer = (state: AppState, action: Action): AppState => {
   switch (action.type) {
@@ -116,6 +121,20 @@ const reducer = (state: AppState, action: Action): AppState => {
           ),
         },
       };
+    case "addRegion":
+      return { ...state, regions: [...state.regions, action.region] };
+    case "updateRegion":
+      return {
+        ...state,
+        regions: state.regions.map((r) =>
+          r.id === action.region.id ? action.region : r,
+        ),
+      };
+    case "deleteRegion":
+      return {
+        ...state,
+        regions: state.regions.filter((r) => r.id !== action.id),
+      };
     default:
       return state;
   }
@@ -133,6 +152,9 @@ interface AppContextValue {
   addParam: (family: ParamFamilyKey, param: ParamDef) => void;
   updateParam: (family: ParamFamilyKey, param: ParamDef) => void;
   deleteParam: (family: ParamFamilyKey, paramId: string) => void;
+  addRegion: (region: RegionDef) => void;
+  updateRegion: (region: RegionDef) => void;
+  deleteRegion: (id: string) => void;
   nextDistributionId: () => number;
 }
 
@@ -168,6 +190,39 @@ const ensureCatalog = (raw: ParamsCatalog | undefined): ParamsCatalog => {
   return raw;
 };
 
+/**
+ * Map legacy region ids ("us-east-1" / "europe") onto their post-migration
+ * equivalents ("usa" / "uk-europe"). Australia keeps its id.
+ */
+const LEGACY_REGION_ID_MAP: Record<string, string> = {
+  "us-east-1": "usa",
+  europe: "uk-europe",
+};
+
+const migrateRegionId = (id: string): string =>
+  LEGACY_REGION_ID_MAP[id] ?? id;
+
+const migrateEntityRegion = <T extends { region: string }>(entity: T): T => {
+  const next = migrateRegionId(entity.region);
+  if (next === entity.region) return entity;
+  return { ...entity, region: next };
+};
+
+/**
+ * If localStorage carries the original 3-region seed (us-east-1, australia,
+ * europe) with default names, replace with the new 5-region seed so existing
+ * users see the expanded catalog. Customized region lists are left alone.
+ */
+const LEGACY_SEED_IDS = new Set(["us-east-1", "australia", "europe"]);
+const isLegacyRegionSeed = (regions: RegionDef[]): boolean =>
+  regions.length === 3 && regions.every((r) => LEGACY_SEED_IDS.has(r.id));
+
+const ensureRegions = (raw: RegionDef[] | undefined): RegionDef[] => {
+  if (!raw || raw.length === 0) return seedRegions;
+  if (isLegacyRegionSeed(raw)) return seedRegions;
+  return raw;
+};
+
 const loadFromStorage = (): AppState | null => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -180,9 +235,14 @@ const loadFromStorage = (): AppState | null => {
     return {
       ...initialState,
       ...parsed,
-      templates: parsed.templates.map(migrateCustomFields),
-      distros: parsed.distros.map(migrateCustomFields),
+      templates: parsed.templates
+        .map(migrateCustomFields)
+        .map(migrateEntityRegion),
+      distros: parsed.distros
+        .map(migrateCustomFields)
+        .map(migrateEntityRegion),
       paramsCatalog: ensureCatalog(parsed.paramsCatalog),
+      regions: ensureRegions(parsed.regions),
     };
   } catch {
     return null;
@@ -215,6 +275,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         dispatch({ type: "updateParam", family, param }),
       deleteParam: (family, paramId) =>
         dispatch({ type: "deleteParam", family, paramId }),
+      addRegion: (region) => dispatch({ type: "addRegion", region }),
+      updateRegion: (region) => dispatch({ type: "updateRegion", region }),
+      deleteRegion: (id) => dispatch({ type: "deleteRegion", id }),
       nextDistributionId: () => state.nextDistributionId,
     }),
     [state],

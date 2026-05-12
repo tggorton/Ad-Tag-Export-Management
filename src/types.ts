@@ -1,6 +1,17 @@
 export type Role = "user" | "admin";
 
-export type Region = "us-east-1" | "australia" | "europe";
+/**
+ * A region is a string id pointing into AppState.regions. Seed ids
+ * ("us-east-1", "australia", "europe") match the original literal union;
+ * admin-added regions get auto-generated ids.
+ */
+export type Region = string;
+
+export interface RegionDef {
+  id: string;
+  name: string;
+  baseUrl: string;
+}
 
 export type TemplateFamily = "nexxen" | "ttd";
 
@@ -61,4 +72,5 @@ export interface AppState {
   distros: Distro[];
   nextDistributionId: number;
   paramsCatalog: ParamsCatalog;
+  regions: RegionDef[];
 }
