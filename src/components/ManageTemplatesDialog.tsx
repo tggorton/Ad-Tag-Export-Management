@@ -1,4 +1,5 @@
 import {
+  Autocomplete,
   Box,
   Button,
   Dialog,
@@ -10,7 +11,6 @@ import {
   FormControlLabel,
   FormLabel,
   IconButton,
-  MenuItem,
   Radio,
   RadioGroup,
   Stack,
@@ -293,15 +293,15 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
     onSaved?.(`Updated template "${updated.name}"`);
   };
 
-  const handleBulkDeleted = (ids: string[]) => {
-    if (selectedId && ids.includes(selectedId)) {
+  // If the currently-selected template was deleted from elsewhere (e.g. via
+  // the Delete/Disable Templates dialog), clear the form so the picker
+  // doesn't dangle on a stale id.
+  useEffect(() => {
+    if (selectedId && !state.templates.find((t) => t.id === selectedId)) {
       setSelectedId("");
       setForm(emptyManageState());
     }
-    onSaved?.(
-      `Deleted ${ids.length} template${ids.length === 1 ? "" : "s"}`,
-    );
-  };
+  }, [selectedId, state.templates]);
 
   const familyTitle = form.family === "nexxen" ? "Nexxen Params" : "TTD Params";
 
@@ -353,36 +353,42 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
           />
 
           <Stack spacing={0.5}>
-            <TextField
-              select
-              label="Tag Template"
-              value={selectedId}
-              onChange={(e) => handleTemplatePick(e.target.value)}
-              size="medium"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (selected) => {
-                  if (!selected) {
-                    return (
-                      <span style={{ color: "rgba(255,255,255,0.5)" }}>
-                        Select a template to edit, or leave blank to create new
-                      </span>
-                    );
-                  }
-                  const tpl = state.templates.find((t) => t.id === selected);
-                  return tpl?.name ?? "";
-                },
+            <Autocomplete
+              value={state.templates.find((t) => t.id === selectedId) ?? null}
+              onChange={(_, newValue) =>
+                handleTemplatePick(newValue?.id ?? "")
+              }
+              options={state.templates}
+              getOptionLabel={(opt) => {
+                const base = opt.advertiserId
+                  ? `${opt.name} — ${opt.advertiserId}`
+                  : opt.name;
+                return opt.disabled ? `${base} (disabled)` : base;
               }}
-            >
-              {state.templates.map((t) => (
-                <MenuItem key={t.id} value={t.id}>
-                  {t.name}
-                  {t.advertiserId ? ` — ${t.advertiserId}` : ""}
-                </MenuItem>
-              ))}
-            </TextField>
+              isOptionEqualToValue={(opt, val) => opt.id === val.id}
+              renderOption={(props, option) => (
+                <Box
+                  component="li"
+                  {...props}
+                  key={option.id}
+                  sx={{ opacity: option.disabled ? 0.5 : 1 }}
+                >
+                  {option.advertiserId
+                    ? `${option.name} — ${option.advertiserId}`
+                    : option.name}
+                  {option.disabled ? " (disabled)" : ""}
+                </Box>
+              )}
+              fullWidth
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Tag Template"
+                  placeholder="Select a template to edit, or leave blank to create new"
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
+            />
             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
               <Button
                 size="small"
@@ -395,28 +401,27 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
                   px: 0.5,
                 }}
               >
-                Delete Templates
+                Delete / Disable Templates
               </Button>
             </Box>
           </Stack>
 
-          <TextField
-            select
-            label="Advertiser"
-            value={form.advertiserId}
-            onChange={(e) => handleAdvertiserChange(e.target.value)}
-            size="medium"
+          <Autocomplete
+            value={form.advertiserId || null}
+            onChange={(_, newValue) => handleAdvertiserChange(newValue ?? "")}
+            options={ADVERTISER_OPTIONS}
+            isOptionEqualToValue={(opt, val) => opt === val}
             fullWidth
-            InputLabelProps={{ shrink: true }}
-            helperText="Optional — limits this template's visibility to a specific advertiser"
-          >
-            <MenuItem value="">None (all advertisers)</MenuItem>
-            {ADVERTISER_OPTIONS.map((adv) => (
-              <MenuItem key={adv} value={adv}>
-                {adv}
-              </MenuItem>
-            ))}
-          </TextField>
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Advertiser"
+                placeholder="None (all advertisers) — start typing to search"
+                InputLabelProps={{ shrink: true }}
+                helperText="Optional — limits this template's visibility to a specific advertiser"
+              />
+            )}
+          />
 
           <FormControl>
             <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.5 }}>
@@ -522,7 +527,7 @@ export const ManageTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
       <DeleteTemplatesDialog
         open={bulkDeleteOpen}
         onClose={() => setBulkDeleteOpen(false)}
-        onDeleted={handleBulkDeleted}
+        onSaved={onSaved}
       />
       <ManageParamsDialog
         open={Boolean(manageParamsFamily)}

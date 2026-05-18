@@ -12,46 +12,43 @@ import {
   ListItemIcon,
   ListItemText,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { useEffect, useState } from "react";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useApp } from "../state/AppContext";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onDeleted: (deletedIds: string[]) => void;
+  onSaved?: (message: string) => void;
 }
 
-export const DeleteTemplatesDialog = ({ open, onClose, onDeleted }: Props) => {
-  const { state, deleteTemplates } = useApp();
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+export const DeleteTemplatesDialog = ({ open, onClose, onSaved }: Props) => {
+  const { state, deleteTemplates, setTemplateDisabled } = useApp();
 
-  useEffect(() => {
-    if (open) setSelectedIds([]);
-  }, [open]);
-
-  const toggleId = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+  const handleToggleEnabled = (id: string, currentlyDisabled: boolean) => {
+    const template = state.templates.find((t) => t.id === id);
+    if (!template) return;
+    // Checkbox checked = enabled, unchecked = disabled. So this is a flip.
+    const nextDisabled = !currentlyDisabled;
+    setTemplateDisabled(id, nextDisabled);
+    onSaved?.(
+      `${nextDisabled ? "Disabled" : "Enabled"} template "${template.name}"`,
     );
   };
 
-  const handleDelete = () => {
-    if (selectedIds.length === 0) return;
-    const names = selectedIds
-      .map((id) => state.templates.find((t) => t.id === id)?.name ?? "")
-      .filter(Boolean);
-    const confirmMsg = `Delete ${selectedIds.length} template${selectedIds.length === 1 ? "" : "s"}?\n\n${names.join(", ")}\n\nThis cannot be undone.`;
-    if (window.confirm(confirmMsg)) {
-      deleteTemplates(selectedIds);
-      onDeleted(selectedIds);
-      onClose();
+  const handleDeleteOne = (id: string, name: string) => {
+    if (
+      window.confirm(
+        `Delete template "${name}"? This removes it entirely. Existing distros that used this template are unaffected — they're self-contained snapshots. This cannot be undone.`,
+      )
+    ) {
+      deleteTemplates([id]);
+      onSaved?.(`Deleted "${name}"`);
     }
   };
-
-  const hasSelection = selectedIds.length > 0;
 
   return (
     <Dialog
@@ -65,7 +62,7 @@ export const DeleteTemplatesDialog = ({ open, onClose, onDeleted }: Props) => {
     >
       <DialogTitle sx={{ pr: 6, py: 2 }}>
         <Typography variant="h6" component="div" sx={{ fontWeight: 500 }}>
-          Delete Templates
+          Delete / Disable Templates
         </Typography>
         <IconButton
           aria-label="close"
@@ -87,50 +84,79 @@ export const DeleteTemplatesDialog = ({ open, onClose, onDeleted }: Props) => {
         ) : (
           <Stack spacing={1} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              Select one or more templates to delete.
+              <strong>Checkbox</strong> toggles enabled / disabled. A disabled
+              template stays hidden from the regular Add Distribution Tag
+              dropdown but remains visible (greyed out) here so it can be
+              re-enabled. The <strong>trash</strong> icon deletes a template
+              entirely — existing distros that used it are unaffected.
             </Typography>
             <Box
               sx={{
                 border: 1,
                 borderColor: "divider",
                 borderRadius: 1,
-                maxHeight: 320,
+                maxHeight: 360,
                 overflowY: "auto",
               }}
             >
               <List dense disablePadding>
                 {state.templates.map((t) => {
-                  const checked = selectedIds.includes(t.id);
+                  const isDisabled = Boolean(t.disabled);
                   return (
                     <ListItem
                       key={t.id}
                       disablePadding
-                      onClick={() => toggleId(t.id)}
                       sx={{
-                        cursor: "pointer",
                         borderBottom: 1,
                         borderColor: "divider",
                         "&:last-of-type": { borderBottom: 0 },
-                        "&:hover": { backgroundColor: "action.hover" },
                         py: 0.5,
+                        opacity: isDisabled ? 0.55 : 1,
                       }}
+                      secondaryAction={
+                        <Tooltip title="Delete template entirely">
+                          <IconButton
+                            edge="end"
+                            size="small"
+                            onClick={() => handleDeleteOne(t.id, t.name)}
+                            sx={{ color: "text.secondary", mr: 0.5 }}
+                          >
+                            <DeleteOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      }
                     >
                       <ListItemIcon sx={{ minWidth: 44, pl: 1 }}>
-                        <Checkbox
-                          edge="start"
-                          checked={checked}
-                          tabIndex={-1}
-                          disableRipple
-                          size="small"
-                        />
+                        <Tooltip
+                          title={
+                            isDisabled
+                              ? "Disabled — check to re-enable"
+                              : "Enabled — uncheck to disable"
+                          }
+                        >
+                          <Checkbox
+                            edge="start"
+                            checked={!isDisabled}
+                            onChange={() =>
+                              handleToggleEnabled(t.id, isDisabled)
+                            }
+                            size="small"
+                          />
+                        </Tooltip>
                       </ListItemIcon>
                       <ListItemText
                         primary={t.name}
-                        secondary={t.family.toUpperCase()}
+                        secondary={
+                          <>
+                            {t.family.toUpperCase()}
+                            {t.advertiserId ? ` · ${t.advertiserId}` : ""}
+                            {isDisabled ? " · disabled" : ""}
+                          </>
+                        }
                         primaryTypographyProps={{ variant: "body2" }}
                         secondaryTypographyProps={{
                           variant: "caption",
-                          sx: { letterSpacing: "0.06em" },
+                          sx: { letterSpacing: "0.04em" },
                         }}
                       />
                     </ListItem>
@@ -142,19 +168,8 @@ export const DeleteTemplatesDialog = ({ open, onClose, onDeleted }: Props) => {
         )}
       </DialogContent>
       <DialogActions sx={{ px: 2, py: 1.5 }}>
-        <Button onClick={onClose} color="primary">
-          Cancel
-        </Button>
-        <Button
-          onClick={handleDelete}
-          disabled={!hasSelection}
-          sx={{
-            color: hasSelection ? "primary.main" : "text.disabled",
-          }}
-        >
-          {hasSelection
-            ? `Delete Selected (${selectedIds.length})`
-            : "Delete Selected"}
+        <Button onClick={onClose} sx={{ color: "primary.main" }}>
+          Done
         </Button>
       </DialogActions>
     </Dialog>

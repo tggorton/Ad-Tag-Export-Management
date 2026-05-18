@@ -36,6 +36,13 @@ export interface Template {
    * Templates with no advertiserId are visible to everyone.
    */
   advertiserId?: string;
+  /**
+   * When true, the template is hidden from the main Add Distribution Tag
+   * dropdown but remains visible (greyed out) in the admin Manage Templates
+   * picker so an admin can re-enable it. Existing distros that referenced
+   * this template are unaffected — they're self-contained snapshots.
+   */
+  disabled?: boolean;
 }
 
 export interface Distro {

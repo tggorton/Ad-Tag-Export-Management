@@ -40,6 +40,7 @@ type Action =
   | { type: "addTemplate"; template: Template }
   | { type: "updateTemplate"; template: Template }
   | { type: "deleteTemplates"; ids: string[] }
+  | { type: "setTemplateDisabled"; id: string; disabled: boolean }
   | { type: "addParam"; family: ParamFamilyKey; param: ParamDef }
   | { type: "updateParam"; family: ParamFamilyKey; param: ParamDef }
   | { type: "deleteParam"; family: ParamFamilyKey; paramId: string }
@@ -90,6 +91,13 @@ const reducer = (state: AppState, action: Action): AppState => {
         templates: state.templates.filter((t) => !idSet.has(t.id)),
       };
     }
+    case "setTemplateDisabled":
+      return {
+        ...state,
+        templates: state.templates.map((t) =>
+          t.id === action.id ? { ...t, disabled: action.disabled } : t,
+        ),
+      };
     case "addParam":
       return {
         ...state,
@@ -149,6 +157,7 @@ interface AppContextValue {
   addTemplate: (template: Template) => void;
   updateTemplate: (template: Template) => void;
   deleteTemplates: (ids: string[]) => void;
+  setTemplateDisabled: (id: string, disabled: boolean) => void;
   addParam: (family: ParamFamilyKey, param: ParamDef) => void;
   updateParam: (family: ParamFamilyKey, param: ParamDef) => void;
   deleteParam: (family: ParamFamilyKey, paramId: string) => void;
@@ -270,6 +279,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       updateTemplate: (template) =>
         dispatch({ type: "updateTemplate", template }),
       deleteTemplates: (ids) => dispatch({ type: "deleteTemplates", ids }),
+      setTemplateDisabled: (id, disabled) =>
+        dispatch({ type: "setTemplateDisabled", id, disabled }),
       addParam: (family, param) => dispatch({ type: "addParam", family, param }),
       updateParam: (family, param) =>
         dispatch({ type: "updateParam", family, param }),
